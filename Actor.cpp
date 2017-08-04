@@ -3,11 +3,11 @@
 
 // Actor Implementation
 
-Actor::Actor(int imageID, int startX, int startY, Direction dir,
-             double size, unsigned int depth):
-GraphObject(imageID, startX, startY, dir, size, depth) {}
-
-
+//Actor::Actor(int imageID, int startX, int startY, Direction dir,
+//             double size, unsigned int depth):
+//GraphObject(imageID, startX, startY, dir, size, depth) {}
+//
+//
 
 // GraphObject Constructor
 //    GraphObject(int imageID, int startX, int startY, Direction dir = right, double size = 1.0, unsigned int depth = 0)
@@ -39,6 +39,14 @@ GraphObject(imageID, startX, startY, dir, size, depth) {}
 
 // Ice Implementation
 
-//imageID = IID_ICE
-//size = 0.25
+Ice::Ice(int startX, int startY): Actor(IID_ICE, startX, startY, right, 0.25, 3)
+{
+    setVisible(true);
+}
+Ice::~Ice()
+{
+    setVisible(false);
+}
+void Ice::doSomething() {}
+
 

@@ -7,13 +7,15 @@ class Actor: public GraphObject
 {
 public:
     Actor(int imageID, int startX, int startY, Direction dir = right,
-               double size = 1.0, unsigned int depth = 0);
-    virtual ~Actor() {return;}           // TODO: change dummy method
-    virtual void doSomething() = 0;
-
-private:
-    // Image ID already in GraphObject
+          double size = 1.0, unsigned int depth = 0):
+    GraphObject(imageID, startX, startY, dir, size, depth) {}
     
+    virtual ~Actor()
+    {
+        setVisible(false);
+    }
+    
+    virtual void doSomething() = 0;
 };
 
 class Person: public Actor
@@ -27,8 +29,17 @@ public:
         setVisible(true);
     }
     
-    virtual ~Person();
+    virtual ~Person()
+    {
+        setVisible(false);
+    }
     
+    // functions to implement
+    // void getBonked();
+    // die():
+    
+    
+
 private:
     int m_hp;
 };
@@ -49,13 +60,20 @@ private:
 class Ice: public Actor
 {
 public:
-    Ice(int startX, int startY): Actor(IID_ICE, startX, startY, right, 0.25, 3)
-    {
-        setVisible(true);
-    }
-    virtual ~Ice() {return;}            // TODO: change dummy method
-    virtual void doSomething() { return; }
+    Ice(int startX, int startY);
+    virtual ~Ice();
+    virtual void doSomething();
 };
 
+//TODO: Classes to implement
+//class Squirt: public Actor {};
+//class SonarKit: public Actor {};
+//class Boulder: public Actor{};
+//class Gold: public Actor {};
+//class Barrel: public Actor {};
+//class Pool: public Actor {};
+//class Protester: public Person {};
+//class HardcoreProtester: public Protester {};
+//
 
 #endif // ACTOR_H_
