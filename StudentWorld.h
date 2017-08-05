@@ -4,6 +4,7 @@
 #include "GameWorld.h"
 #include "GameConstants.h"
 #include <string>
+#include <vector>
 
 // Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
 
@@ -17,6 +18,7 @@ public:
 
 	virtual int init()
 	{
+        
 		return GWSTATUS_CONTINUE_GAME;
 	}
 
@@ -32,7 +34,9 @@ public:
 	{
 	}
 
-private:
+//private:
+    //Iceman* m_iceman;
+    //Ice m_ice[64][64];
 };
 
 #endif // STUDENTWORLD_H_

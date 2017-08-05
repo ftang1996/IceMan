@@ -1,29 +1,37 @@
 #include "Actor.h"
 #include "StudentWorld.h"
 
-// Actor Implementation
-
-//Actor::Actor(int imageID, int startX, int startY, Direction dir,
+//////////////////////////////////////////////////////////////
+// Actor Implementation                                     //
+//////////////////////////////////////////////////////////////
+//Actor::Actor(StudentWorld* world, int imageID, int sound,
+//             int startX, int startY, Direction dir,
 //             double size, unsigned int depth):
-//GraphObject(imageID, startX, startY, dir, size, depth) {}
+//GraphObject(imageID, startX, startY, dir, size, depth)
+//{
+//    m_world = world;
+//    m_sound = sound;
+//}
 //
+//Actor::~Actor()
+//{
+//    setVisible(false);
+//}
 //
+//StudentWorld* Actor::getWorld()
+//{
+//    return m_world;
+//}
+//
+//void Actor::playSound()
+//{
+//    getWorld()->playSound(m_sound);
+//    
+//}
 
-// GraphObject Constructor
-//    GraphObject(int imageID, int startX, int startY, Direction dir = right, double size = 1.0, unsigned int depth = 0)
-//    : m_imageID(imageID), m_visible(false), m_x(startX), m_y(startY),
-//	   m_destX(startX), m_destY(startY), m_brightness(1.0),
-//	   m_animationNumber(0), m_direction(dir), m_size(size), m_depth(depth)
-//    {
-//        if (m_size <= 0)
-//            m_size = 1;
-//
-//        getGraphObjects(m_depth).insert(this);
-//    }
-//
-
-// Person Implementation
-
+//////////////////////////////////////////////////////////////
+// Person Implementation                                    //
+//////////////////////////////////////////////////////////////
 
 
 // Iceman Implementation
@@ -36,17 +44,21 @@
 //    setVisible(true);
 //}
 
+//////////////////////////////////////////////////////////////
+// Ice Implementation                                       //
+//////////////////////////////////////////////////////////////
 
-// Ice Implementation
-
-Ice::Ice(int startX, int startY): Actor(IID_ICE, startX, startY, right, 0.25, 3)
+Ice::Ice(StudentWorld* world, int startX, int startY):
+Actor(world, IID_ICE, startX, startY, right, 0.25, 3)
 {
     setVisible(true);
 }
+
 Ice::~Ice()
 {
     setVisible(false);
 }
+
 void Ice::doSomething() {}
 
 
