@@ -6,8 +6,14 @@
 #include <string>
 #include <vector>
 
+#include "GraphObject.h"
+
 #include "Actor.h"      //TODO: Remove Later
 
+const int ICE_GRID_WIDTH = 64;
+const int ICE_GRID_HEIGHT = 60;
+
+class Person;
 class Iceman;
 class Ice;
 
@@ -17,13 +23,15 @@ public:
     StudentWorld(std::string assetDir);
     virtual ~StudentWorld();
     virtual int init();
-
     virtual int move();
-
-	virtual void cleanUp()
+	
+    virtual void cleanUp()
 	{
 	}
-
+    
+    bool isBoundary(int x, int y);
+    bool isIce(int x, int y);
+    void removeIce(int x, int y, std::string dir);
 private:
     Iceman* m_iceman;
     Ice* m_ice[VIEW_WIDTH][VIEW_HEIGHT];

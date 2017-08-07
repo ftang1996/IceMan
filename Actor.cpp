@@ -1,6 +1,7 @@
 #include "Actor.h"
 #include "StudentWorld.h"
 
+using namespace std;
 //////////////////////////////////////////////////////////////
 // Actor Implementation                                     //
 //////////////////////////////////////////////////////////////
@@ -85,32 +86,53 @@ void Iceman::doSomething()
         {
             case KEY_PRESS_UP:
                 if (dir == up)
-                    moveTo(getX(), getY()+1);
+                    actionMove(getX(), getY()+1, dir);
                 else
                     setDirection(up);
                 break;
             case KEY_PRESS_DOWN:
-                if (dir == up)
-                    moveTo(getX(), getY()-1);
+                if (dir == down)
+                    actionMove(getX(), getY()-1, dir);
                 else
                     setDirection(down);
                 break;
             case KEY_PRESS_LEFT:
                 if (dir == left)
-                    moveTo(getX()-1, getY());
+                   actionMove(getX()-1, getY(), dir);
                 else
                     setDirection(left);
                 break;
             case KEY_PRESS_RIGHT:
                 if (dir == right)
-                    moveTo(getX()+1, getY());
+                    actionMove(getX()+1, getY(), dir);
                 else
                     setDirection(right);
                 break;
-    
-    
                 }
             }
+}
+
+// Moves only if destination is valid and does appropriate
+// character interaction with any objects
+void Iceman::actionMove(int x, int y, Direction dir)
+{
+    if (!getWorld()->isBoundary(x, y))
+    {
+        if (getWorld()->isIce(x,y))
+        {
+            string strDir;
+            if (dir == up || dir == down)
+                strDir = "vertical";
+            else
+                strDir = "horizontal";
+            getWorld()->removeIce(x,y, strDir);
+        }
+        
+        
+        moveTo(x, y);
+    }
+    
+    
 }
 
 
