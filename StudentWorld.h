@@ -29,9 +29,9 @@ public:
 	{
 	}
     
-    bool isBoundary(int x, int y);
+    bool isBoundary(int x, int y, double size);
     bool isIce(int x, int y);
-    void removeIce(int x, int y, std::string dir);
+    void removeIce(int x, int y);
 private:
     Iceman* m_iceman;
     Ice* m_ice[VIEW_WIDTH][VIEW_HEIGHT];

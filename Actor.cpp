@@ -86,25 +86,25 @@ void Iceman::doSomething()
         {
             case KEY_PRESS_UP:
                 if (dir == up)
-                    actionMove(getX(), getY()+1, dir);
+                    actionMove(getX(), getY()+1);
                 else
                     setDirection(up);
                 break;
             case KEY_PRESS_DOWN:
                 if (dir == down)
-                    actionMove(getX(), getY()-1, dir);
+                    actionMove(getX(), getY()-1);
                 else
                     setDirection(down);
                 break;
             case KEY_PRESS_LEFT:
                 if (dir == left)
-                   actionMove(getX()-1, getY(), dir);
+                   actionMove(getX()-1, getY());
                 else
                     setDirection(left);
                 break;
             case KEY_PRESS_RIGHT:
                 if (dir == right)
-                    actionMove(getX()+1, getY(), dir);
+                    actionMove(getX()+1, getY());
                 else
                     setDirection(right);
                 break;
@@ -114,25 +114,53 @@ void Iceman::doSomething()
 
 // Moves only if destination is valid and does appropriate
 // character interaction with any objects
-void Iceman::actionMove(int x, int y, Direction dir)
+void Iceman::actionMove(int x, int y)
 {
-    if (!getWorld()->isBoundary(x, y))
+    Direction dir = getDirection();
+    switch(dir)
     {
-        if (getWorld()->isIce(x,y))
-        {
-            string strDir;
-            if (dir == up || dir == down)
-                strDir = "vertical";
+        case up:
+            if (getWorld()->isBoundary(x,y,getSize()))
+                y--;
             else
-                strDir = "horizontal";
-            getWorld()->removeIce(x,y, strDir);
-        }
-        
-        
-        moveTo(x, y);
+                for (int c = x; c < x+4; c++)
+                {
+                    int r = y+3;
+                    getWorld()->removeIce(c, r);
+                }
+            break;
+        case down:
+            if (getWorld()->isBoundary(x,y,getSize()))
+                y++;
+            else
+                for (int c = x; c < x+4; c++)
+                {
+                    int r = y;
+                    getWorld()->removeIce(c, r);
+                }
+            break;
+        case left:
+            if (getWorld()->isBoundary(x,y,getSize()))
+                x++;
+            else
+                for (int r = y; r < y+4; r++)
+                {
+                    int c = x;
+                    getWorld()->removeIce(c, r);
+                }
+            break;
+        case right:
+            if (getWorld()->isBoundary(x,y,getSize()))
+                x--;
+            else
+                for (int r = y; r < y+4; r++)
+                {
+                    int c = x+3;
+                    getWorld()->removeIce(c, r);
+                }
+            break;
     }
-    
-    
+        moveTo(x, y);
 }
 
 

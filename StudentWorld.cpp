@@ -60,9 +60,10 @@ int StudentWorld::move()
 }
 
 // Function returns true if trying to move past boundaries
-bool StudentWorld::isBoundary(int x, int y)
+bool StudentWorld::isBoundary(int x, int y, double size)
 {
-    if (x < 0 || x > ICE_GRID_WIDTH || y < 0 || y > ICE_GRID_HEIGHT)
+    // right boundary needs to acct for image size
+    if (x < 0 || x > ICE_GRID_WIDTH - (size*4) || y < 0 || y > ICE_GRID_HEIGHT)
         return true;
     return false;
 }
@@ -70,30 +71,17 @@ bool StudentWorld::isBoundary(int x, int y)
 // Function returns true if ice exists at x,y
 bool StudentWorld::isIce(int x, int y)
 {
-    if (!isBoundary(x,y) && m_ice[y][x] == nullptr)
+    if (m_ice[y][x] == nullptr)
         return false;
     return true;
 }
 
-void StudentWorld::removeIce(int x, int y, string dir)
+void StudentWorld::removeIce(int x, int y)
 {
-    if (dir == "vertical")
+    if (isIce(x, y))
     {
-        for (int c = x; c < x+4; c++)
-        {
-            int r = y;
-            delete m_ice[r][c];
-            m_ice[r][c] = nullptr;
-        }
-    }
-    else if (dir == "horizontal")
-    {
-        for (int r = y; r < y+4; r++)
-        {
-            int c = x;
-            delete m_ice[r][c];
-            m_ice[r][c] = nullptr;
-        }
+        delete m_ice[y][x];
+        m_ice[y][x] = nullptr;
     }
 
 }

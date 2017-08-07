@@ -41,7 +41,7 @@ public:
     bool isAlive();
     void setDead();
     int getHP();
-    virtual void actionMove(int x, int y, Direction dir) = 0;
+    virtual void actionMove(int x, int y) = 0;
 
     // functions to implement
     // virtual void bonked();
@@ -61,7 +61,7 @@ public:
     Iceman(StudentWorld* world);
     virtual ~Iceman();
     virtual void doSomething();
-    virtual void actionMove(int x, int y, Direction dir);
+    virtual void actionMove(int x, int y);
 
     
     // TODO: getSquirts
