@@ -6,37 +6,27 @@
 #include <string>
 #include <vector>
 
-// Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
+#include "Actor.h"      //TODO: Remove Later
+
+class Iceman;
+class Ice;
 
 class StudentWorld : public GameWorld
 {
 public:
-	StudentWorld(std::string assetDir)
-		: GameWorld(assetDir)
-	{
-	}
+    StudentWorld(std::string assetDir);
+    virtual ~StudentWorld();
+    virtual int init();
 
-	virtual int init()
-	{
-        
-		return GWSTATUS_CONTINUE_GAME;
-	}
-
-	virtual int move()
-	{
-		// This code is here merely to allow the game to build, run, and terminate after you hit enter a few times.
-		// Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
-		decLives();
-		return GWSTATUS_PLAYER_DIED;
-	}
+    virtual int move();
 
 	virtual void cleanUp()
 	{
 	}
 
-//private:
-    //Iceman* m_iceman;
-    //Ice m_ice[64][64];
+private:
+    Iceman* m_iceman;
+    Ice* m_ice[VIEW_WIDTH][VIEW_HEIGHT];
 };
 
 #endif // STUDENTWORLD_H_
