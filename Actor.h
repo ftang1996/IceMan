@@ -43,7 +43,6 @@ public:
     bool isAlive();
     
     void setDead();
-    virtual void actionMove(int x, int y) = 0;
 
     // functions to implement
     // virtual void bonked();
@@ -68,7 +67,7 @@ public:
     // TODO: getBarrels
 
     virtual void doSomething();
-    virtual void actionMove(int x, int y);
+    virtual void dig(int x, int y, Direction dir);
 
 private:
     int m_squirts;

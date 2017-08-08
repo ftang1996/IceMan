@@ -28,7 +28,7 @@ public:
     
     bool isBoundary(int x, int y, double size);
     bool isIce(int x, int y);
-    void removeIce(int x, int y);
+    void digIce(int x, int y);
 private:
     Iceman* m_iceman;
     Ice* m_ice[VIEW_WIDTH][VIEW_HEIGHT];

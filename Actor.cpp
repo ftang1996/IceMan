@@ -91,25 +91,25 @@ void Iceman::doSomething()
         {
             case KEY_PRESS_UP:
                 if (dir == up)
-                    actionMove(getX(), getY()+1);
+                    dig(getX(), getY()+1, dir);
                 else
                     setDirection(up);
                 break;
             case KEY_PRESS_DOWN:
                 if (dir == down)
-                    actionMove(getX(), getY()-1);
+                    dig(getX(), getY()-1, dir);
                 else
                     setDirection(down);
                 break;
             case KEY_PRESS_LEFT:
                 if (dir == left)
-                   actionMove(getX()-1, getY());
+                   dig(getX()-1, getY(),dir);
                 else
                     setDirection(left);
                 break;
             case KEY_PRESS_RIGHT:
                 if (dir == right)
-                    actionMove(getX()+1, getY());
+                    dig(getX()+1, getY(), dir);
                 else
                     setDirection(right);
                 break;
@@ -119,22 +119,22 @@ void Iceman::doSomething()
 
 // Moves only if destination is valid and does appropriate
 // character interaction with any objects
-void Iceman::actionMove(int x, int y)
+void Iceman::dig(int x, int y, Direction dir)
 {
-    Direction dir = getDirection();
     switch(dir)
     {
         case up:
             // if boundary, animate in same location, do not move
-            if (getWorld()->isBoundary(x,y,getSize()))
+            if (getWorld()->isBoundary(x, y, getSize()))
                 y--;
-            // move to new location, remove ice if needed
             else
+            {
                 for (int c = x; c < x+4; c++)
                 {
                     int r = y+3;
-                    getWorld()->removeIce(c, r);
+                    getWorld()->digIce(c, r);
                 }
+            }
             break;
         case down:
             if (getWorld()->isBoundary(x,y,getSize()))
@@ -143,7 +143,7 @@ void Iceman::actionMove(int x, int y)
                 for (int c = x; c < x+4; c++)
                 {
                     int r = y;
-                    getWorld()->removeIce(c, r);
+                    getWorld()->digIce(c, r);
                 }
             break;
         case left:
@@ -153,7 +153,7 @@ void Iceman::actionMove(int x, int y)
                 for (int r = y; r < y+4; r++)
                 {
                     int c = x;
-                    getWorld()->removeIce(c, r);
+                    getWorld()->digIce(c, r);
                 }
             break;
         case right:
@@ -163,7 +163,7 @@ void Iceman::actionMove(int x, int y)
                 for (int r = y; r < y+4; r++)
                 {
                     int c = x+3;
-                    getWorld()->removeIce(c, r);
+                    getWorld()->digIce(c, r);
                 }
             break;
     }

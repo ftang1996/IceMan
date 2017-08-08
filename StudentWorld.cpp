@@ -61,7 +61,10 @@ void StudentWorld::cleanUp()
     m_iceman = nullptr;
     for (int r = 0; r < ICE_GRID_HEIGHT; r++)
         for (int c = 0; c < ICE_GRID_WIDTH; c++)
-            removeIce(c, r);
+        {
+            delete m_ice[r][c];
+            m_ice[r][c] = nullptr;
+        }
 }
 
 // Function returns true if trying to move past boundaries
@@ -81,12 +84,14 @@ bool StudentWorld::isIce(int x, int y)
     return true;
 }
 
-void StudentWorld::removeIce(int x, int y)
+// Removes ice if when Iceman digs
+void StudentWorld::digIce(int x, int y)
 {
-    if (isIce(x, y))    // remove ice if exists
+    if (isIce(x, y))
     {
         delete m_ice[y][x];
         m_ice[y][x] = nullptr;
+        playSound(SOUND_DIG);
     }
 
 }
