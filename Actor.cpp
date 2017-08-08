@@ -78,6 +78,21 @@ Iceman::~Iceman()
     setDead();
 }
 
+int Iceman::getSquirts()
+{
+    return m_squirts;
+}
+
+int Iceman::getCharge()
+{
+    return m_charge;
+}
+
+int Iceman::getGold()
+{
+    return m_gold;
+}
+
 void Iceman::doSomething()
 {
     if (!isAlive())

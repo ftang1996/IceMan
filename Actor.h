@@ -61,9 +61,9 @@ public:
     Iceman(StudentWorld* world);
     virtual ~Iceman();
     
-    // TODO: getSquirts
-    // TODO: getCharge
-    // TODO: getGold
+    int getSquirts();
+    int getCharge();
+    int getGold();
     // TODO: getBarrels
 
     virtual void doSomething();

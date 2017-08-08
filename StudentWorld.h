@@ -26,6 +26,8 @@ public:
     virtual int move();
     virtual void cleanUp();
     
+
+    void setDisplayText();
     bool isBoundary(int x, int y, double size);
     bool isIce(int x, int y);
     void digIce(int x, int y);

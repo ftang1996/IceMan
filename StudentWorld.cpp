@@ -1,10 +1,10 @@
 #include "StudentWorld.h"
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include "Actor.h"
 
 using namespace std;
-
-
 
 
 GameWorld* createStudentWorld(string assetDir)
@@ -46,6 +46,7 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
+    setDisplayText();
     m_iceman->doSomething();
     
     
@@ -55,6 +56,7 @@ int StudentWorld::move()
     // decLives();
     // return GWSTATUS_PLAYER_DIED;
 }
+
 void StudentWorld::cleanUp()
 {
     delete m_iceman;
@@ -65,6 +67,33 @@ void StudentWorld::cleanUp()
             delete m_ice[r][c];
             m_ice[r][c] = nullptr;
         }
+}
+
+void StudentWorld::setDisplayText()
+{
+    // Get values
+    int level = getLevel();
+    int lives = getLives();
+    int health = (m_iceman->getHP()/10)*100;
+    int squirts = m_iceman->getSquirts();
+    int gold = m_iceman->getGold();
+    // TODO int barrelsLeft = ...
+    int sonar = m_iceman->getCharge();
+    int score = getScore();
+    
+    // Format string
+    ostringstream ss;
+    ss << "Lvl: " << setw(2) << setfill(' ') << level << "  ";
+    ss << "Lives: " << lives << "  ";
+    ss << "Hlth: " << setw(3) << setfill(' ') << health << "%  ";
+    ss << "Wtr: " << setw(2) << setfill(' ') << squirts << "  ";
+    ss << "Gld: " << setw(2) << setfill(' ') << gold << "  ";
+    // TODO: add oil
+    ss << "Sonar: " << setw(2) << setfill(' ') << sonar << "  ";
+    ss << "Scr: " << setw(6) << setfill('0') << score;
+    
+    string str(ss.str());
+    setGameStatText(str);
 }
 
 // Function returns true if trying to move past boundaries
