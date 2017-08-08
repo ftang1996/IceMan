@@ -2,15 +2,18 @@
 #include "StudentWorld.h"
 
 using namespace std;
+
 //////////////////////////////////////////////////////////////
 // Actor Implementation                                     //
 //////////////////////////////////////////////////////////////
+
 Actor::Actor(StudentWorld* world, int imageID,
       int startX, int startY, Direction dir,
       double size, unsigned int depth):
 GraphObject(imageID, startX, startY, dir, size, depth)
 {
     m_world = world;
+    setVisible(true);
 }
 
 Actor::~Actor()
@@ -35,7 +38,6 @@ Actor(world, imageID, startX, startY, dir, size, depth)
 {
     m_hp = hp;
     m_alive = true;
-    setVisible(true);
 }
 
 Person::~Person()
@@ -43,6 +45,10 @@ Person::~Person()
     setVisible(false);
 }
 
+int Person::getHP()
+{
+    return m_hp;
+}
 bool Person::isAlive()
 {
     return m_alive;
@@ -53,10 +59,7 @@ void Person::setDead()
     m_alive = false;
 }
 
-int Person::getHP()
-{
-    return m_hp;
-}
+
 
 //////////////////////////////////////////////////////////////
 // Iceman Implementation                                    //
@@ -68,11 +71,13 @@ Iceman::Iceman(StudentWorld* world): Person(10, world, IID_PLAYER, 30, 60)
     m_charge = 1;
     m_gold = 0;
 }
+
 Iceman::~Iceman()
 {
     setVisible(false);
     setDead();
 }
+
 void Iceman::doSomething()
 {
     if (!isAlive())
@@ -108,8 +113,8 @@ void Iceman::doSomething()
                 else
                     setDirection(right);
                 break;
-                }
-            }
+        }
+    }
 }
 
 // Moves only if destination is valid and does appropriate
@@ -120,8 +125,10 @@ void Iceman::actionMove(int x, int y)
     switch(dir)
     {
         case up:
+            // if boundary, animate in same location, do not move
             if (getWorld()->isBoundary(x,y,getSize()))
                 y--;
+            // move to new location, remove ice if needed
             else
                 for (int c = x; c < x+4; c++)
                 {

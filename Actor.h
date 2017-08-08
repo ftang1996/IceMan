@@ -24,7 +24,7 @@ public:
 //    }
     
     virtual void doSomething() = 0;
-    //virtual void makeVisible() = 0;
+
     
 
 private:
@@ -38,9 +38,11 @@ public:
            int startX, int startY, Direction dir = right,
            double size = 1.0, unsigned int depth = 0);
     virtual ~Person();
-    bool isAlive();
-    void setDead();
+    
     int getHP();
+    bool isAlive();
+    
+    void setDead();
     virtual void actionMove(int x, int y) = 0;
 
     // functions to implement
@@ -54,25 +56,25 @@ private:
     bool m_alive;
 };
 
-
 class Iceman: public Person
 {
 public:
     Iceman(StudentWorld* world);
     virtual ~Iceman();
-    virtual void doSomething();
-    virtual void actionMove(int x, int y);
-
     
     // TODO: getSquirts
     // TODO: getCharge
     // TODO: getGold
     // TODO: getBarrels
-    
+
+    virtual void doSomething();
+    virtual void actionMove(int x, int y);
+
 private:
     int m_squirts;
     int m_charge;
     int m_gold;
+    int m_barrels;
 };
 
 class Ice: public Actor
@@ -80,6 +82,7 @@ class Ice: public Actor
 public:
     Ice(StudentWorld* world, int startX, int startY);
     virtual ~Ice();
+    
     virtual void doSomething();
 };
 
@@ -92,6 +95,6 @@ public:
 //class Pool: public Actor {};
 //class Protester: public Person {};
 //class HardcoreProtester: public Protester {};
-//
+
 
 #endif // ACTOR_H_

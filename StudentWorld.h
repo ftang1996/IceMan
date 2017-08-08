@@ -24,10 +24,7 @@ public:
     virtual ~StudentWorld();
     virtual int init();
     virtual int move();
-	
-    virtual void cleanUp()
-	{
-	}
+    virtual void cleanUp();
     
     bool isBoundary(int x, int y, double size);
     bool isIce(int x, int y);

@@ -13,10 +13,7 @@ GameWorld* createStudentWorld(string assetDir)
 }
 
 StudentWorld::StudentWorld(std::string assetDir)
-: GameWorld(assetDir)
-{
-    m_iceman = nullptr;
-}
+: GameWorld(assetDir) {}
 
 StudentWorld::~StudentWorld()
 {
@@ -58,6 +55,14 @@ int StudentWorld::move()
     // decLives();
     // return GWSTATUS_PLAYER_DIED;
 }
+void StudentWorld::cleanUp()
+{
+    delete m_iceman;
+    m_iceman = nullptr;
+    for (int r = 0; r < ICE_GRID_HEIGHT; r++)
+        for (int c = 0; c < ICE_GRID_WIDTH; c++)
+            removeIce(c, r);
+}
 
 // Function returns true if trying to move past boundaries
 bool StudentWorld::isBoundary(int x, int y, double size)
@@ -78,7 +83,7 @@ bool StudentWorld::isIce(int x, int y)
 
 void StudentWorld::removeIce(int x, int y)
 {
-    if (isIce(x, y))
+    if (isIce(x, y))    // remove ice if exists
     {
         delete m_ice[y][x];
         m_ice[y][x] = nullptr;
