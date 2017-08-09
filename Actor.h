@@ -15,10 +15,13 @@ public:
           int startX, int startY, Direction dir,
           double size, unsigned int depth);
     virtual ~Actor();
-    StudentWorld* getWorld();
     virtual void doSomething() = 0;
+    StudentWorld* getWorld();
+    bool isAlive();
+    void setDead();
 private:
     StudentWorld* m_world;
+    bool m_alive;
 };
 
 class Person: public Actor
@@ -30,19 +33,17 @@ public:
     virtual ~Person();
     
     int getHP();
-    bool isAlive();
+
     
-    void setDead();
+
     virtual bool isBoundary(int x, int y) = 0;
-    // functions to implement
+    // TODO:functions to implement
     // virtual void bonked();
     // virtual void annoyed();
     // virtual void addItem() = 0;
-    // die():
     
 private:
     int m_hp;
-    bool m_alive;
 };
 
 class Iceman: public Person
@@ -54,6 +55,7 @@ public:
     int getSquirts();
     int getCharge();
     int getGold();
+    void addGold();
     // TODO: getBarrels
 
     virtual void doSomething();
@@ -82,6 +84,8 @@ public:
     Gold(StudentWorld* world, int x, int y);
     virtual ~Gold();
     
+    bool isPickableIceman();
+    bool isPickableProtester();
     void setPickableProtester();
     
     virtual void doSomething();

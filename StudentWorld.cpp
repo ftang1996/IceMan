@@ -68,7 +68,14 @@ int StudentWorld::move()
     setDisplayText();
     m_iceman->doSomething();
     
-    
+    for (vector<Actor*>::iterator it = m_items.begin(); it != m_items.end(); it++)
+    {
+        if ((*it)->isAlive())
+            (*it)->doSomething();
+        if(!(*it)->isAlive())   //delete if picked up NEED TO FIX
+            delete (*it);
+
+    }
     return GWSTATUS_CONTINUE_GAME;
     // This code is here merely to allow the game to build, run, and terminate after you hit enter a few times.
     // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
@@ -83,6 +90,11 @@ void StudentWorld::cleanUp()
     for (int r = 0; r < ICE_GRID_HEIGHT; r++)
         for (int c = 0; c < ICE_GRID_WIDTH; c++)
             clearIce(c, r);
+}
+
+Iceman* StudentWorld::getIceman()
+{
+    return m_iceman;
 }
 
 void StudentWorld::setDisplayText()
@@ -123,14 +135,14 @@ void StudentWorld::insertRandom(int amt, ActorType type)
         int y = rand() % (ICE_GRID_HEIGHT - SPRITE_WIDTH + 1);
         
         // Generate item if coordinates meet distance requirement
-        if (okRadius(x, y))
+        if (placeNewItem(x, y) && !isTunnel(x, y))
         {
             switch(type)
             {
                 case boulder:
                     
                 case gold:
-                    m_objects.push_back(new Gold(this, x, y));
+                    m_items.push_back(new Gold(this, x, y));
                     break;
                 case barrel:
             
@@ -172,6 +184,84 @@ void StudentWorld::digIce(int x, int y)
     }
 }
 
+// Returns true if location is in central tunnel
+bool StudentWorld::isTunnel(int x, int y)
+{
+    if (x >= 4 && x < 60 && y >= 30 && y < 34)
+        return true;
+    return false;
+}
+
+double StudentWorld::distance(int x1, int y1, int x2, int y2)
+{
+    return sqrt(pow((x1 - x2),2) + pow((y1 - y2),2));
+}
+
+// Checks if actor distance is greater than radius of world items
+bool StudentWorld::placeNewItem(int x, int y)
+{
+    int itemX, itemY;
+    for (int i = 0; i < m_items.size(); i++)
+    {
+        itemX = m_items[i]->getX();
+        itemY = m_items[i]->getY();
+        double dist = distance(x, y, itemX, itemY);
+        if (dist < 6.0)
+            return false;
+    }
+    return true;
+}
+
+// Returns true if item distance from iceman is within radius
+bool StudentWorld::wiRadIceman(Actor* item, double radius)
+{
+    int itemX = item->getX();
+    int itemY = item->getY();
+    int imX = m_iceman->getX();
+    int imY = m_iceman->getY();
+    if (distance(itemX, itemY, imX, imY) <= radius)
+        return true;
+    return false;
+}
+
+
+//void StudentWorld::showNearbyItems(int x, int y)
+//{
+//    int itemX, itemY, type;
+//    for (int i = 0; i < m_items.size(); i++)
+//    {
+//        type = m_items[i]->getID();
+//        if(type == IID_GOLD || type == IID_BARREL)
+//        {
+//            itemX = m_items[i]->getX();
+//            itemY = m_items[i]->getY();
+//            if (distance(x, y, itemX, itemY) <= 4.0)
+//                m_items[i]->setVisible(true);
+//        }
+//    }
+//}
+
+//bool StudentWorld::hitObject(int perX, int perY)
+//{
+//    for (int i = 0; i < m_objects.size(); i++)
+//}
+
+
+//bool StudentWorld::okRadius(int x, int y, double rad)
+//{
+//    int existX, existY;
+//    for (int i = 0; i < m_objects.size(); i++)
+//    {
+//        existX = m_objects[i]->getX();
+//        existY = m_objects[i]->getY();
+//        float rad = sqrt(pow((x - existX),2) + pow((y-existY),2));
+//        if (rad < MIN_RADIUS)
+//            return false;
+//    }
+//    return true;
+//}
+
+
 //// Function returns true if trying to move past boundaries
 //bool StudentWorld::isBoundary(int x, int y)
 //{
@@ -180,29 +270,6 @@ void StudentWorld::digIce(int x, int y)
 //        return true;
 //    return false;
 //}
-
-bool StudentWorld::isTunnel(int x, int y)
-// Checks that new object placement meets distance requirement
-bool StudentWorld::okRadius(int x, int y)
-{
-    int existX, existY;
-    for (int i =0; i < m_objects.size(); i++)
-    {
-        existX = m_objects[i]->getX();
-        existY = m_objects[i]->getY();
-        float rad = sqrt(pow((x - existX),2) + pow((y-existY),2));
-        if (rad < MIN_RADIUS)
-            return false;
-    }
-    return true;
-}
-
-
-//bool StudentWorld::hitObject(int perX, int perY)
-//{
-//    
-//}
-
 
 
 

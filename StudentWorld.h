@@ -12,7 +12,7 @@
 
 const int ICE_GRID_WIDTH = 64;
 const int ICE_GRID_HEIGHT = 60;
-const double MIN_RADIUS = 6.0;
+//const double MIN_RADIUS = 6.0;
 
 class Actor;
 class Person;
@@ -30,6 +30,7 @@ public:
     virtual int move();
     virtual void cleanUp();
 
+    Iceman* getIceman();
     void setDisplayText();
     void insertRandom(int amt, ActorType type);
     
@@ -37,15 +38,21 @@ public:
     void clearIce(int x, int y);
     void digIce(int x, int y);
 //    bool isBoundary(int x, int y);
-    bool okRadius(int x, int y);
-    bool hitObject(int perX, int perY);
+    bool isTunnel(int x, int y);
+    double distance(int x1, int y1, int x2, int y2);
+    bool placeNewItem(int x, int y);
+    bool wiRadIceman(Actor* item, double radius);
+
+    
+//    void showNearbyItems(int x, int y);
+//    bool hitObject(int perX, int perY);
     
    
     
 private:
     Iceman* m_iceman;
     Ice* m_ice[VIEW_WIDTH][VIEW_HEIGHT];
-    std::vector<Actor*> m_objects;
+    std::vector<Actor*> m_items;
 };
 
 #endif // STUDENTWORLD_H_

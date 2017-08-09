@@ -14,6 +14,7 @@ GraphObject(imageID, startX, startY, dir, size, depth)
 {
     m_world = world;
     setVisible(true);
+    m_alive = true;
 }
 
 Actor::~Actor()
@@ -26,6 +27,15 @@ StudentWorld* Actor::getWorld()
     return m_world;
 }
 
+bool Actor::isAlive()
+{
+    return m_alive;
+}
+
+void Actor::setDead()
+{
+    m_alive = false;
+}
 
 //////////////////////////////////////////////////////////////
 // Person Implementation                                    //
@@ -38,7 +48,6 @@ Person::Person(int hp, StudentWorld* world, int imageID,
 Actor(world, imageID, startX, startY, dir, size, depth)
 {
     m_hp = hp;
-    m_alive = true;
 }
 
 Person::~Person()
@@ -49,15 +58,6 @@ Person::~Person()
 int Person::getHP()
 {
     return m_hp;
-}
-bool Person::isAlive()
-{
-    return m_alive;
-}
-
-void Person::setDead()
-{
-    m_alive = false;
 }
 
 
@@ -91,6 +91,11 @@ int Iceman::getCharge()
 int Iceman::getGold()
 {
     return m_gold;
+}
+
+void Iceman::addGold()
+{
+    m_gold++;
 }
 
 void Iceman::doSomething()
@@ -228,6 +233,16 @@ Gold::~Gold()
     setVisible(false);
 }
 
+bool Gold::isPickableIceman()
+{
+    return m_pickableIceman;
+}
+
+bool Gold::isPickableProtester()
+{
+    return m_pickableProtester;
+}
+
 void Gold::setPickableProtester()
 {
     m_pickableProtester = true;
@@ -237,7 +252,24 @@ void Gold::setPickableProtester()
 
 void Gold::doSomething()
 {
-    return;
+    if(!isAlive())
+        return;
+    // Reveal item if nearby
+    if(!isVisible() && getWorld()->wiRadIceman(this, 4.0))
+    {
+        setVisible(true);
+        return;
+    }
+    
+    // Have iceman pickup item if nearby
+    if(getWorld()->wiRadIceman(this, 3.0) && isPickableIceman())
+    {
+        setDead();
+        getWorld()->playSound(SOUND_GOT_GOODIE);
+        getWorld()->increaseScore(10);
+        getWorld()->getIceman()->addGold();
+        
+    }
 }
 
 
