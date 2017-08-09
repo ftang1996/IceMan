@@ -1,7 +1,11 @@
 #include "StudentWorld.h"
 #include <string>
+#include <vector>
+#include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <math.h>
+
 #include "Actor.h"
 
 using namespace std;
@@ -22,10 +26,10 @@ StudentWorld::~StudentWorld()
 
 int StudentWorld::init()
 {
-    // add iceman
+    // Add iceman
     m_iceman = new Iceman(this);
     
-    // add ice
+    // Add ice
     for (int r = 0; r < ICE_GRID_HEIGHT; r++)
     {
         for (int c = 0; c < ICE_GRID_WIDTH; c++)
@@ -40,6 +44,21 @@ int StudentWorld::init()
             delete m_ice[r][c];
             m_ice[r][c] = nullptr;
         }
+    
+    // Add all other actors
+    int lvl = getLevel();
+    int B = min(lvl/2 + 2, 9);  // boulders
+    int G = max(5 - lvl/2, 2);  // gold
+    int L = min(2 + lvl, 21);   // barrels
+    
+    insertRandom(G, gold);
+    
+    
+    
+    
+    
+    
+    
     
     return GWSTATUS_CONTINUE_GAME;
 }
@@ -63,10 +82,7 @@ void StudentWorld::cleanUp()
     m_iceman = nullptr;
     for (int r = 0; r < ICE_GRID_HEIGHT; r++)
         for (int c = 0; c < ICE_GRID_WIDTH; c++)
-        {
-            delete m_ice[r][c];
-            m_ice[r][c] = nullptr;
-        }
+            clearIce(c, r);
 }
 
 void StudentWorld::setDisplayText()
@@ -96,13 +112,35 @@ void StudentWorld::setDisplayText()
     setGameStatText(str);
 }
 
-// Function returns true if trying to move past boundaries
-bool StudentWorld::isBoundary(int x, int y, double size)
+// Insert object at random location
+void StudentWorld::insertRandom(int amt, ActorType type)
 {
-    // right boundary needs to acct for image size
-    if (x < 0 || x > ICE_GRID_WIDTH - (size*4) || y < 0 || y > ICE_GRID_HEIGHT)
-        return true;
-    return false;
+    int i = 0;
+    while (i < amt)
+    {
+        // Generate random coordinates
+        int x = rand() % (ICE_GRID_WIDTH - SPRITE_WIDTH + 1);
+        int y = rand() % (ICE_GRID_HEIGHT - SPRITE_WIDTH + 1);
+        
+        // Generate item if coordinates meet distance requirement
+        if (okRadius(x, y))
+        {
+            switch(type)
+            {
+                case boulder:
+                    
+                case gold:
+                    m_objects.push_back(new Gold(this, x, y));
+                    break;
+                case barrel:
+            
+                case sonar:
+                    break;
+            }
+            
+            i++;
+        }
+    }
 }
 
 // Function returns true if ice exists at x,y
@@ -113,7 +151,17 @@ bool StudentWorld::isIce(int x, int y)
     return true;
 }
 
-// Removes ice if when Iceman digs
+// Normally delete ice
+void StudentWorld::clearIce(int x, int y)
+{
+    if (isIce(x, y))
+    {
+        delete m_ice[y][x];
+        m_ice[y][x] = nullptr;
+    }
+}
+
+// Removes ice when Iceman digs
 void StudentWorld::digIce(int x, int y)
 {
     if (isIce(x, y))
@@ -122,10 +170,38 @@ void StudentWorld::digIce(int x, int y)
         m_ice[y][x] = nullptr;
         playSound(SOUND_DIG);
     }
+}
 
+//// Function returns true if trying to move past boundaries
+//bool StudentWorld::isBoundary(int x, int y)
+//{
+//    // right boundary needs to acct for image size
+//    if (x < 0 || x > ICE_GRID_WIDTH - SPRITE_WIDTH || y < 0 || y > ICE_GRID_HEIGHT)
+//        return true;
+//    return false;
+//}
+
+bool StudentWorld::isTunnel(int x, int y)
+// Checks that new object placement meets distance requirement
+bool StudentWorld::okRadius(int x, int y)
+{
+    int existX, existY;
+    for (int i =0; i < m_objects.size(); i++)
+    {
+        existX = m_objects[i]->getX();
+        existY = m_objects[i]->getY();
+        float rad = sqrt(pow((x - existX),2) + pow((y-existY),2));
+        if (rad < MIN_RADIUS)
+            return false;
+    }
+    return true;
 }
 
 
+//bool StudentWorld::hitObject(int perX, int perY)
+//{
+//    
+//}
 
 
 

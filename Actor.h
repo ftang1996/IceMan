@@ -5,6 +5,7 @@
 #include "StudentWorld.h"       //TODO: remove later
 
 
+
 class StudentWorld;
 
 class Actor: public GraphObject
@@ -15,18 +16,7 @@ public:
           double size, unsigned int depth);
     virtual ~Actor();
     StudentWorld* getWorld();
-
-    
-//    void playSound()
-//    {
-//        getWorld()->playSound(m_sound);
-//        
-//    }
-    
     virtual void doSomething() = 0;
-
-    
-
 private:
     StudentWorld* m_world;
 };
@@ -43,7 +33,7 @@ public:
     bool isAlive();
     
     void setDead();
-
+    virtual bool isBoundary(int x, int y) = 0;
     // functions to implement
     // virtual void bonked();
     // virtual void annoyed();
@@ -67,6 +57,7 @@ public:
     // TODO: getBarrels
 
     virtual void doSomething();
+    virtual bool isBoundary(int x, int y);
     virtual void dig(int x, int y, Direction dir);
 
 private:
@@ -79,17 +70,32 @@ private:
 class Ice: public Actor
 {
 public:
-    Ice(StudentWorld* world, int startX, int startY);
+    Ice(StudentWorld* world, int x, int y);
     virtual ~Ice();
     
     virtual void doSomething();
+};
+
+class Gold: public Actor
+{
+public:
+    Gold(StudentWorld* world, int x, int y);
+    virtual ~Gold();
+    
+    void setPickableProtester();
+    
+    virtual void doSomething();
+private:
+    bool m_permanent;
+    bool m_pickableIceman;
+    bool m_pickableProtester;
 };
 
 //TODO: Classes to implement
 //class Squirt: public Actor {};
 //class SonarKit: public Actor {};
 //class Boulder: public Actor{};
-//class Gold: public Actor {};
+
 //class Barrel: public Actor {};
 //class Pool: public Actor {};
 //class Protester: public Person {};

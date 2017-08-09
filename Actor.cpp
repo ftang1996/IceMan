@@ -26,6 +26,7 @@ StudentWorld* Actor::getWorld()
     return m_world;
 }
 
+
 //////////////////////////////////////////////////////////////
 // Person Implementation                                    //
 //////////////////////////////////////////////////////////////
@@ -58,7 +59,6 @@ void Person::setDead()
 {
     m_alive = false;
 }
-
 
 
 //////////////////////////////////////////////////////////////
@@ -132,6 +132,14 @@ void Iceman::doSomething()
     }
 }
 
+bool Iceman::isBoundary(int x, int y)
+{
+    // right boundary needs to acct for image size
+    if (x < 0 || x > ICE_GRID_WIDTH - SPRITE_WIDTH || y < 0 || y > ICE_GRID_HEIGHT)
+        return true;
+    return false;
+}
+
 // Moves only if destination is valid and does appropriate
 // character interaction with any objects
 void Iceman::dig(int x, int y, Direction dir)
@@ -140,7 +148,7 @@ void Iceman::dig(int x, int y, Direction dir)
     {
         case up:
             // if boundary, animate in same location, do not move
-            if (getWorld()->isBoundary(x, y, getSize()))
+            if (isBoundary(x, y))
                 y--;
             else
             {
@@ -152,7 +160,7 @@ void Iceman::dig(int x, int y, Direction dir)
             }
             break;
         case down:
-            if (getWorld()->isBoundary(x,y,getSize()))
+            if (isBoundary(x, y))
                 y++;
             else
                 for (int c = x; c < x+4; c++)
@@ -162,7 +170,7 @@ void Iceman::dig(int x, int y, Direction dir)
                 }
             break;
         case left:
-            if (getWorld()->isBoundary(x,y,getSize()))
+            if (isBoundary(x, y))
                 x++;
             else
                 for (int r = y; r < y+4; r++)
@@ -172,7 +180,7 @@ void Iceman::dig(int x, int y, Direction dir)
                 }
             break;
         case right:
-            if (getWorld()->isBoundary(x,y,getSize()))
+            if (isBoundary(x, y))
                 x--;
             else
                 for (int r = y; r < y+4; r++)
@@ -185,13 +193,12 @@ void Iceman::dig(int x, int y, Direction dir)
         moveTo(x, y);
 }
 
-
 //////////////////////////////////////////////////////////////
 // Ice Implementation                                       //
 //////////////////////////////////////////////////////////////
 
-Ice::Ice(StudentWorld* world, int startX, int startY):
-Actor(world, IID_ICE, startX, startY, right, 0.25, 3)
+Ice::Ice(StudentWorld* world, int x, int y):
+Actor(world, IID_ICE, x, y, right, 0.25, 3)
 {
     setVisible(true);
 }
@@ -202,5 +209,39 @@ Ice::~Ice()
 }
 
 void Ice::doSomething() {}
+
+//////////////////////////////////////////////////////////////
+// Gold Implementation                                      //
+//////////////////////////////////////////////////////////////
+
+Gold::Gold(StudentWorld* world, int x, int y):
+Actor(world, IID_GOLD, x, y, right, 1.0, 2)
+{
+    setVisible(true);               //TODO: set to false;
+    m_permanent = true;
+    m_pickableIceman = true;
+    m_pickableProtester = false;
+}
+
+Gold::~Gold()
+{
+    setVisible(false);
+}
+
+void Gold::setPickableProtester()
+{
+    m_pickableProtester = true;
+    m_pickableIceman = false;
+    m_permanent = false;
+}
+
+void Gold::doSomething()
+{
+    return;
+}
+
+
+
+
 
 
