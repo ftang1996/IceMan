@@ -36,7 +36,7 @@ public:
     
     bool isIce(int x, int y);
     void clearIce(int x, int y);
-    void digIce(int x, int y);
+    bool digIce(int x, int y);
 //    bool isBoundary(int x, int y);
     bool isTunnel(int x, int y);
     double distance(int x1, int y1, int x2, int y2);

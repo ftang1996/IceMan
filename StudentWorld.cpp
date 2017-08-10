@@ -26,10 +26,10 @@ StudentWorld::~StudentWorld()
 
 int StudentWorld::init()
 {
-    // Add iceman
+    // add iceman
     m_iceman = new Iceman(this);
     
-    // Add ice
+    // add ice
     for (int r = 0; r < ICE_GRID_HEIGHT; r++)
     {
         for (int c = 0; c < ICE_GRID_WIDTH; c++)
@@ -47,7 +47,7 @@ int StudentWorld::init()
         }
     }
     
-    // Add all other actors
+    // add all other actors
     int lvl = getLevel();
     int B = min(lvl/2 + 2, 9);  // boulders
     int G = max(5 - lvl/2, 2);  // gold
@@ -59,33 +59,39 @@ int StudentWorld::init()
     
     
     
-    
-    
-    
     return GWSTATUS_CONTINUE_GAME;
 }
 
 int StudentWorld::move()
 {
+    // iceman actions
     setDisplayText();
     m_iceman->doSomething();
+    int imX = m_iceman->getX();     // dig away ice in iceman's path
+    int imY = m_iceman->getY();
+    bool dug = false;
+    for (int iceX = imX; iceX < imX + SPRITE_WIDTH; iceX++)
+    {
+        for (int iceY = imY; iceY < imY + SPRITE_HEIGHT; iceY++)
+            if(digIce(iceX, iceY))
+                dug = true;
+    }
+    if (dug)        // only play sound if ice was dug
+        playSound(SOUND_DIG);
     
-    // Each item do something
+    // all item actions
     vector<Actor*>::iterator it = m_items.begin();
     while (it != m_items.end())
     {
         if ((*it)->isAlive())
             (*it)->doSomething();
-        
-        // Delete if picked up
-        if(!(*it)->isAlive())
+        if(!(*it)->isAlive())       // delete if picked up
         {
             delete *it;
             it = m_items.erase(it);
         }
         else
             it++;
-
         
     }
     
@@ -149,17 +155,17 @@ void StudentWorld::setDisplayText()
     setGameStatText(str);
 }
 
-// Insert object at random location
+// insert object at random location
 void StudentWorld::insertRandom(int amt, ActorType type)
 {
     int i = 0;
     while (i < amt)
     {
-        // Generate random coordinates
+        // generate random coordinates
         int x = rand() % (ICE_GRID_WIDTH - SPRITE_WIDTH + 1);
         int y = rand() % (ICE_GRID_HEIGHT - SPRITE_WIDTH + 1);
         
-        // Generate item if coordinates meet distance requirement
+        // generate item if coordinates meet distance requirement
         if (placeNewItem(x, y) && !isTunnel(x, y))
         {
             switch(type)
@@ -180,7 +186,7 @@ void StudentWorld::insertRandom(int amt, ActorType type)
     }
 }
 
-// Function returns true if ice exists at x,y
+// returns true if ice exists at x,y
 bool StudentWorld::isIce(int x, int y)
 {
     if (m_ice[y][x] == nullptr)
@@ -188,7 +194,7 @@ bool StudentWorld::isIce(int x, int y)
     return true;
 }
 
-// Normally delete ice
+// normally delete ice
 void StudentWorld::clearIce(int x, int y)
 {
     if (isIce(x, y))
@@ -198,21 +204,23 @@ void StudentWorld::clearIce(int x, int y)
     }
 }
 
-// Removes ice when Iceman digs
-void StudentWorld::digIce(int x, int y)
+// removes ice when Iceman digs
+bool StudentWorld::digIce(int x, int y)
 {
     if (isIce(x, y))
     {
         delete m_ice[y][x];
         m_ice[y][x] = nullptr;
-        playSound(SOUND_DIG);
+        return true;
+//        playSound(SOUND_DIG);
     }
+    return false;
 }
 
-// Returns true if location is in central tunnel
+// returns true if location is in central tunnel
 bool StudentWorld::isTunnel(int x, int y)
 {
-    if (x >= 30 && x < 34 && y >= 4 && y < 60 )
+    if (x >= (30-SPRITE_WIDTH) && x < 34 && y >= (4-SPRITE_HEIGHT) && y < 60 )
         return true;
     return false;
 }
@@ -222,7 +230,7 @@ double StudentWorld::distance(int x1, int y1, int x2, int y2)
     return sqrt(pow((x1 - x2),2) + pow((y1 - y2),2));
 }
 
-// Checks if actor distance is greater than radius of world items
+// checks if actor distance is greater than radius of world items
 bool StudentWorld::placeNewItem(int x, int y)
 {
     int itemX, itemY;
@@ -237,7 +245,7 @@ bool StudentWorld::placeNewItem(int x, int y)
     return true;
 }
 
-// Returns true if item distance from iceman is within radius
+// returns true if item distance from iceman is within radius
 bool StudentWorld::wiRadIceman(Actor* item, double radius)
 {
     int itemX = item->getX();

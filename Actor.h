@@ -60,7 +60,7 @@ public:
 
     virtual void doSomething();
     virtual bool isBoundary(int x, int y);
-    virtual void dig(int x, int y, Direction dir);
+    // void dig(int x, int y, Direction dir);
 
 private:
     int m_squirts;

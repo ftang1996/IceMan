@@ -112,27 +112,29 @@ void Iceman::doSomething()
         {
             case KEY_PRESS_UP:
                 if (dir == up)
-                    dig(getX(), getY()+1, dir);
+                    moveTo(getX(), getY()+1);
                 else
                     setDirection(up);
                 break;
             case KEY_PRESS_DOWN:
                 if (dir == down)
-                    dig(getX(), getY()-1, dir);
+                    moveTo(getX(), getY()-1);
                 else
                     setDirection(down);
                 break;
             case KEY_PRESS_LEFT:
                 if (dir == left)
-                   dig(getX()-1, getY(),dir);
+                   moveTo(getX()-1, getY());
                 else
                     setDirection(left);
                 break;
             case KEY_PRESS_RIGHT:
                 if (dir == right)
-                    dig(getX()+1, getY(), dir);
+                    moveTo(getX()+1, getY());
                 else
                     setDirection(right);
+                break;
+            default:
                 break;
         }
     }
@@ -148,56 +150,56 @@ bool Iceman::isBoundary(int x, int y)
 
 // Moves only if destination is valid and does appropriate
 // character interaction with any objects
-void Iceman::dig(int x, int y, Direction dir)
-{
-    switch(dir)
-    {
-        case up:
-            // if boundary, animate in same location, do not move
-            if (isBoundary(x, y))
-                y--;
-            else
-            {
-                for (int c = x; c < x+4; c++)
-                {
-                    int r = y+3;
-                    getWorld()->digIce(c, r);
-                }
-            }
-            break;
-        case down:
-            if (isBoundary(x, y))
-                y++;
-            else
-                for (int c = x; c < x+4; c++)
-                {
-                    int r = y;
-                    getWorld()->digIce(c, r);
-                }
-            break;
-        case left:
-            if (isBoundary(x, y))
-                x++;
-            else
-                for (int r = y; r < y+4; r++)
-                {
-                    int c = x;
-                    getWorld()->digIce(c, r);
-                }
-            break;
-        case right:
-            if (isBoundary(x, y))
-                x--;
-            else
-                for (int r = y; r < y+4; r++)
-                {
-                    int c = x+3;
-                    getWorld()->digIce(c, r);
-                }
-            break;
-    }
-        moveTo(x, y);
-}
+//void Iceman::dig(int x, int y, Direction dir)
+//{
+//    switch(dir)
+//    {
+//        case up:
+//            // if boundary, animate in same location, do not move
+//            if (isBoundary(x, y))
+//                y--;
+//            else
+//            {
+//                for (int c = x; c < x+4; c++)
+//                {
+//                    int r = y+3;
+//                    getWorld()->digIce(c, r);
+//                }
+//            }
+//            break;
+//        case down:
+//            if (isBoundary(x, y))
+//                y++;
+//            else
+//                for (int c = x; c < x+4; c++)
+//                {
+//                    int r = y;
+//                    getWorld()->digIce(c, r);
+//                }
+//            break;
+//        case left:
+//            if (isBoundary(x, y))
+//                x++;
+//            else
+//                for (int r = y; r < y+4; r++)
+//                {
+//                    int c = x;
+//                    getWorld()->digIce(c, r);
+//                }
+//            break;
+//        case right:
+//            if (isBoundary(x, y))
+//                x--;
+//            else
+//                for (int r = y; r < y+4; r++)
+//                {
+//                    int c = x+3;
+//                    getWorld()->digIce(c, r);
+//                }
+//            break;
+//    }
+//        moveTo(x, y);
+//}
 
 //////////////////////////////////////////////////////////////
 // Ice Implementation                                       //
@@ -223,7 +225,7 @@ void Ice::doSomething() {}
 Gold::Gold(StudentWorld* world, int x, int y):
 Actor(world, IID_GOLD, x, y, right, 1.0, 2)
 {
-    setVisible(false);               //TODO: set to false;
+    setVisible(true);
     m_permanent = true;
     m_pickableIceman = true;
     m_pickableProtester = false;
