@@ -45,8 +45,7 @@ int StudentWorld::init()
     {
         for (int c = 30; c < 34; c++)
         {
-            delete m_ice[r][c];
-            m_ice[r][c] = nullptr;
+            clearIce(c, r);
         }
     }
     
@@ -98,6 +97,8 @@ int StudentWorld::move()
             it++;
         
     }
+    
+    //TODO: check for barrels
     
     return GWSTATUS_CONTINUE_GAME;
     // This code is here merely to allow the game to build, run, and terminate after you hit enter a few times.
@@ -181,7 +182,6 @@ void StudentWorld::insertRandom(int amt, ItemType type)
                     
                     break;
             }
-            
             i++;
         }
     }

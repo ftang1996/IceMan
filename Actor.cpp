@@ -15,6 +15,8 @@ GraphObject(imageID, startX, startY, dir, size, depth)
     m_world = world;
     setVisible(true);
     m_alive = true;
+    m_permanent = true;
+    m_pickableIceman = true;
 }
 
 Actor::~Actor()
@@ -38,6 +40,26 @@ void Actor::setDead()
     setVisible(false);
 }
 
+bool Actor::isPickableIceman()
+{
+    return m_pickableIceman;
+}
+
+void Actor::setPickableIceman(bool pickable)
+{
+    m_pickableIceman = pickable;
+}
+
+bool Actor::isPermanent()
+{
+    return m_permanent;
+}
+
+void Actor::setTemp()
+{
+    m_permanent = false;
+}
+
 //////////////////////////////////////////////////////////////
 // Person Implementation                                    //
 //////////////////////////////////////////////////////////////
@@ -49,6 +71,7 @@ Person::Person(int hp, StudentWorld* world, int imageID,
 Actor(world, imageID, startX, startY, dir, size, depth)
 {
     m_hp = hp;
+    setPickableIceman(false);
 }
 
 Person::~Person()
@@ -209,6 +232,7 @@ Ice::Ice(StudentWorld* world, int x, int y):
 Actor(world, IID_ICE, x, y, right, 0.25, 3)
 {
     setVisible(true);
+    setPickableIceman(false);
 }
 
 Ice::~Ice()
@@ -226,30 +250,13 @@ Gold::Gold(StudentWorld* world, int x, int y):
 Actor(world, IID_GOLD, x, y, right, 1.0, 2)
 {
     setVisible(false);
-    m_permanent = true;
-    m_pickableIceman = true;
     m_pickableProtester = false;
 }
 
 Gold::~Gold()
 {
     setVisible(false);
-    m_permanent = false;
-}
-
-bool Gold::isPermanent()
-{
-    return m_permanent;
-}
-
-void Gold::setTemp()
-{
-    m_permanent = false;
-}
-
-bool Gold::isPickableIceman()
-{
-    return m_pickableIceman;
+    setTemp();
 }
 
 bool Gold::isPickableProtester()
@@ -260,8 +267,8 @@ bool Gold::isPickableProtester()
 void Gold::setPickableProtester()
 {
     m_pickableProtester = true;
-    m_pickableIceman = false;
-    m_permanent = false;
+    setPickableIceman(false);
+    setTemp();
 }
 
 void Gold::doSomething()
@@ -315,6 +322,67 @@ void Barrel::doSomething()
         getWorld()->addItemIceman(StudentWorld::barrel);
     }
 }
+
+//////////////////////////////////////////////////////////////
+// Boulder Implementation                                   //
+//////////////////////////////////////////////////////////////
+
+Boulder::Boulder(StudentWorld* world, int x, int y):
+Actor(world, IID_BARREL, x, y, down, 1.0, 1)
+{
+    setPickableIceman(false);
+    m_stable = true;
+    m_falling = false;
+}
+
+Boulder::~Boulder()
+{
+    setVisible(false);
+}
+
+bool Boulder::getStability()
+{
+    return m_stable;
+}
+
+void Boulder::setUnstable()
+{
+    m_stable = false;
+}
+
+bool Boulder::getFalling()
+{
+    return m_falling;
+}
+
+void Boulder::setFalling()
+{
+    m_falling = true;
+}
+
+void Boulder::doSomething()
+{
+    if (!isAlive())
+        return;
+}
+
+//////////////////////////////////////////////////////////////
+// SonarKit Implementation                                  //
+//////////////////////////////////////////////////////////////
+
+//SonarKit::SonarKit(StudentWorld* world, int x, int y):
+//Actor(world, IID_SONAR, x, y, right, 1.0, 2)
+//{
+//    setVisible(true);
+//    setTemp();
+//
+//}
+
+
+
+
+
+
 
 
 
