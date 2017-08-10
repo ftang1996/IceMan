@@ -95,18 +95,6 @@ int StudentWorld::move()
         
     }
     
-//    for (vector<Actor*>::iterator it = m_items.begin(); it != m_items.end(); it++)
-//    {
-//        if ((*it)->isAlive())
-//            (*it)->doSomething();
-//        if(!(*it)->isAlive())
-//        {
-//            delete *it;
-//            it = m_items.erase(it);
-//        }
-//        
-//
-//    }
     return GWSTATUS_CONTINUE_GAME;
     // This code is here merely to allow the game to build, run, and terminate after you hit enter a few times.
     // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
@@ -156,7 +144,7 @@ void StudentWorld::setDisplayText()
 }
 
 // insert object at random location
-void StudentWorld::insertRandom(int amt, ActorType type)
+void StudentWorld::insertRandom(int amt, ItemType type)
 {
     int i = 0;
     while (i < amt)
@@ -171,13 +159,17 @@ void StudentWorld::insertRandom(int amt, ActorType type)
             switch(type)
             {
                 case boulder:
+                    break;
                     
                 case gold:
                     m_items.push_back(new Gold(this, x, y));
                     break;
                 case barrel:
+                    break;
             
                 case sonar:
+                    break;
+                case water:
                     break;
             }
             
@@ -257,6 +249,32 @@ bool StudentWorld::wiRadIceman(Actor* item, double radius)
     return false;
 }
 
+void StudentWorld::addItemIceman(ItemType type)
+{
+    switch (type)
+    {
+        case boulder:
+            playSound(SOUND_FALLING_ROCK);
+            break;
+        case gold:
+            playSound(SOUND_GOT_GOODIE);
+            increaseScore(10);
+            getIceman()->addGold();
+            break;
+        case barrel:
+            playSound(SOUND_FOUND_OIL);
+            break;
+        case sonar:
+            playSound(SOUND_GOT_GOODIE);
+            break;
+        case water:
+            playSound(SOUND_GOT_GOODIE);
+            break;
+            
+
+    }
+    
+}
 
 //void StudentWorld::showNearbyItems(int x, int y)
 //{

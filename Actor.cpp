@@ -225,7 +225,7 @@ void Ice::doSomething() {}
 Gold::Gold(StudentWorld* world, int x, int y):
 Actor(world, IID_GOLD, x, y, right, 1.0, 2)
 {
-    setVisible(true);
+    setVisible(false);
     m_permanent = true;
     m_pickableIceman = true;
     m_pickableProtester = false;
@@ -279,10 +279,7 @@ void Gold::doSomething()
     if(getWorld()->wiRadIceman(this, 3.0) && isPickableIceman())
     {
         setDead();
-        getWorld()->playSound(SOUND_GOT_GOODIE);
-        getWorld()->increaseScore(10);
-        getWorld()->getIceman()->addGold();
-        
+        getWorld()->addItemIceman(StudentWorld::gold);
     }
 }
 

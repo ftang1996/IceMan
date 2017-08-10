@@ -22,7 +22,7 @@ class Ice;
 class StudentWorld : public GameWorld
 {
 public:
-    enum ActorType {boulder, gold, barrel, sonar};
+    enum ItemType {boulder, gold, barrel, sonar, water};
     StudentWorld(std::string assetDir);
     virtual ~StudentWorld();
     
@@ -32,18 +32,19 @@ public:
 
     Iceman* getIceman();
     void setDisplayText();
-    void insertRandom(int amt, ActorType type);
+    void insertRandom(int amt, ItemType type);
     
     bool isIce(int x, int y);
     void clearIce(int x, int y);
     bool digIce(int x, int y);
-//    bool isBoundary(int x, int y);
+
     bool isTunnel(int x, int y);
     double distance(int x1, int y1, int x2, int y2);
     bool placeNewItem(int x, int y);
     bool wiRadIceman(Actor* item, double radius);
+    void addItemIceman(ItemType type);
 
-    
+//    bool isBoundary(int x, int y);
 //    void showNearbyItems(int x, int y);
 //    bool hitObject(int perX, int perY);
     
