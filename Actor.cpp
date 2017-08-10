@@ -35,6 +35,7 @@ bool Actor::isAlive()
 void Actor::setDead()
 {
     m_alive = false;
+    setVisible(false);
 }
 
 //////////////////////////////////////////////////////////////
@@ -255,7 +256,7 @@ void Gold::doSomething()
     if(!isAlive())
         return;
     // Reveal item if nearby
-    if(!isVisible() && getWorld()->wiRadIceman(this, 4.0))
+    if(!isVisible() && isAlive() && getWorld()->wiRadIceman(this, 4.0))
     {
         setVisible(true);
         return;

@@ -39,11 +39,13 @@ int StudentWorld::init()
     }
     
     for (int r = 4; r < 60; r++)       // remove center tunnel
+    {
         for (int c = 30; c < 34; c++)
         {
             delete m_ice[r][c];
             m_ice[r][c] = nullptr;
         }
+    }
     
     // Add all other actors
     int lvl = getLevel();
@@ -68,14 +70,37 @@ int StudentWorld::move()
     setDisplayText();
     m_iceman->doSomething();
     
-    for (vector<Actor*>::iterator it = m_items.begin(); it != m_items.end(); it++)
+    // Each item do something
+    vector<Actor*>::iterator it = m_items.begin();
+    while (it != m_items.end())
     {
         if ((*it)->isAlive())
             (*it)->doSomething();
-        if(!(*it)->isAlive())   //delete if picked up NEED TO FIX
-            delete (*it);
+        
+        // Delete if picked up
+        if(!(*it)->isAlive())
+        {
+            delete *it;
+            it = m_items.erase(it);
+        }
+        else
+            it++;
 
+        
     }
+    
+//    for (vector<Actor*>::iterator it = m_items.begin(); it != m_items.end(); it++)
+//    {
+//        if ((*it)->isAlive())
+//            (*it)->doSomething();
+//        if(!(*it)->isAlive())
+//        {
+//            delete *it;
+//            it = m_items.erase(it);
+//        }
+//        
+//
+//    }
     return GWSTATUS_CONTINUE_GAME;
     // This code is here merely to allow the game to build, run, and terminate after you hit enter a few times.
     // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
@@ -187,7 +212,7 @@ void StudentWorld::digIce(int x, int y)
 // Returns true if location is in central tunnel
 bool StudentWorld::isTunnel(int x, int y)
 {
-    if (x >= 4 && x < 60 && y >= 30 && y < 34)
+    if (x >= 30 && x < 34 && y >= 4 && y < 60 )
         return true;
     return false;
 }
