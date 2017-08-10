@@ -84,6 +84,8 @@ public:
     Gold(StudentWorld* world, int x, int y);
     virtual ~Gold();
     
+    bool isPermanent();
+    void setTemp();
     bool isPickableIceman();
     bool isPickableProtester();
     void setPickableProtester();

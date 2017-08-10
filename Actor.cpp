@@ -223,7 +223,7 @@ void Ice::doSomething() {}
 Gold::Gold(StudentWorld* world, int x, int y):
 Actor(world, IID_GOLD, x, y, right, 1.0, 2)
 {
-    setVisible(true);               //TODO: set to false;
+    setVisible(false);               //TODO: set to false;
     m_permanent = true;
     m_pickableIceman = true;
     m_pickableProtester = false;
@@ -232,6 +232,17 @@ Actor(world, IID_GOLD, x, y, right, 1.0, 2)
 Gold::~Gold()
 {
     setVisible(false);
+    m_permanent = false;
+}
+
+bool Gold::isPermanent()
+{
+    return m_permanent;
+}
+
+void Gold::setTemp()
+{
+    m_permanent = false;
 }
 
 bool Gold::isPickableIceman()
