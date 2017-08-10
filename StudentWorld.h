@@ -43,6 +43,7 @@ public:
     bool placeNewItem(int x, int y);
     bool wiRadIceman(Actor* item, double radius);
     void addItemIceman(ItemType type);
+    int getBarrels();
 
 //    bool isBoundary(int x, int y);
 //    void showNearbyItems(int x, int y);

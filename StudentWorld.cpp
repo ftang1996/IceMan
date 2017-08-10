@@ -17,7 +17,10 @@ GameWorld* createStudentWorld(string assetDir)
 }
 
 StudentWorld::StudentWorld(std::string assetDir)
-: GameWorld(assetDir) {}
+: GameWorld(assetDir)
+{
+    int m_numBarrels = 2;
+}
 
 StudentWorld::~StudentWorld()
 {
@@ -54,6 +57,7 @@ int StudentWorld::init()
     int L = min(2 + lvl, 21);   // barrels
     
     insertRandom(G, gold);
+    insertRandom(L, barrel);
     
     
     
@@ -109,6 +113,8 @@ void StudentWorld::cleanUp()
     for (int r = 0; r < ICE_GRID_HEIGHT; r++)
         for (int c = 0; c < ICE_GRID_WIDTH; c++)
             clearIce(c, r);
+    
+    // TODO: Delete items
 }
 
 Iceman* StudentWorld::getIceman()
@@ -124,6 +130,7 @@ void StudentWorld::setDisplayText()
     int health = (m_iceman->getHP()/10)*100;
     int squirts = m_iceman->getSquirts();
     int gold = m_iceman->getGold();
+    int barrels = getBarrels();
     // TODO int barrelsLeft = ...
     int sonar = m_iceman->getCharge();
     int score = getScore();
@@ -135,7 +142,7 @@ void StudentWorld::setDisplayText()
     ss << "Hlth: " << setw(3) << setfill(' ') << health << "%  ";
     ss << "Wtr: " << setw(2) << setfill(' ') << squirts << "  ";
     ss << "Gld: " << setw(2) << setfill(' ') << gold << "  ";
-    // TODO: add oil
+    ss << "Oil Left" << setw(2) << setfill(' ') << barrels << " ";
     ss << "Sonar: " << setw(2) << setfill(' ') << sonar << "  ";
     ss << "Scr: " << setw(6) << setfill('0') << score;
     
@@ -159,17 +166,19 @@ void StudentWorld::insertRandom(int amt, ItemType type)
             switch(type)
             {
                 case boulder:
-                    break;
                     
+                    break;
                 case gold:
                     m_items.push_back(new Gold(this, x, y));
                     break;
                 case barrel:
+                    m_items.push_back(new Barrel(this, x, y));
                     break;
-            
                 case sonar:
+                    
                     break;
                 case water:
+                    
                     break;
             }
             
@@ -249,6 +258,7 @@ bool StudentWorld::wiRadIceman(Actor* item, double radius)
     return false;
 }
 
+// add items to iceman inventory
 void StudentWorld::addItemIceman(ItemType type)
 {
     switch (type)
@@ -263,6 +273,7 @@ void StudentWorld::addItemIceman(ItemType type)
             break;
         case barrel:
             playSound(SOUND_FOUND_OIL);
+            increaseScore(1000);
             break;
         case sonar:
             playSound(SOUND_GOT_GOODIE);
@@ -270,10 +281,21 @@ void StudentWorld::addItemIceman(ItemType type)
         case water:
             playSound(SOUND_GOT_GOODIE);
             break;
-            
-
     }
-    
+}
+
+// returns number of barrels left in level
+int StudentWorld::getBarrels()
+{
+    int barrels = 0;
+    vector<Actor*>::iterator it = m_items.begin();
+    while (it != m_items.end())
+    {
+        if ((*it)->getID() == IID_BARREL)
+            barrels++;
+        it++;
+    }
+    return barrels;
 }
 
 //void StudentWorld::showNearbyItems(int x, int y)

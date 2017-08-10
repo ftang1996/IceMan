@@ -31,6 +31,7 @@ public:
            int startX, int startY, Direction dir = right,
            double size = 1.0, unsigned int depth = 0);
     virtual ~Person();
+    virtual void doSomething() = 0;
     
     int getHP();
 
@@ -66,7 +67,7 @@ private:
     int m_squirts;
     int m_charge;
     int m_gold;
-    int m_barrels;
+//    int m_barrels;
 };
 
 class Ice: public Actor
@@ -95,6 +96,17 @@ private:
     bool m_permanent;
     bool m_pickableIceman;
     bool m_pickableProtester;
+};
+
+class Barrel: public Actor
+{
+public:
+    Barrel(StudentWorld* world, int x, int y);
+    virtual ~Barrel();
+    
+    virtual void doSomething();
+
+    
 };
 
 //TODO: Classes to implement

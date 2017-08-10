@@ -276,14 +276,45 @@ void Gold::doSomething()
     }
     
     // Have iceman pickup item if nearby
-    if(getWorld()->wiRadIceman(this, 3.0) && isPickableIceman())
+    if(getWorld()->wiRadIceman(this, 3.0) && isVisible() && isPickableIceman())
     {
         setDead();
         getWorld()->addItemIceman(StudentWorld::gold);
     }
 }
 
+//////////////////////////////////////////////////////////////
+// Barrel Implementation                                    //
+//////////////////////////////////////////////////////////////
 
+Barrel::Barrel(StudentWorld* world, int x, int y):
+Actor(world, IID_BARREL, x, y, right, 1.0, 2)
+{
+    setVisible(false);
+}
+
+Barrel::~Barrel()
+{
+    setVisible(false);
+}
+
+void Barrel::doSomething()
+{
+    if (!isAlive())
+        return;
+    // Reveal item if nearby
+    if(!isVisible() && isAlive() && getWorld()->wiRadIceman(this, 4.0))
+    {
+        setVisible(true);
+        return;
+    }
+    // Have iceman pickup item if nearby
+    if(getWorld()->wiRadIceman(this, 3.0) && isVisible())
+    {
+        setDead();
+        getWorld()->addItemIceman(StudentWorld::barrel);
+    }
+}
 
 
 
