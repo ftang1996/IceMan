@@ -17,11 +17,14 @@ GraphObject(imageID, startX, startY, dir, size, depth)
     m_alive = true;
     m_permanent = true;
     m_pickableIceman = true;
+    m_ticks = 0;
 }
 
 Actor::~Actor()
 {
     setVisible(false);
+    setDead();
+    setPickableIceman(false);
 }
 
 StudentWorld* Actor::getWorld()
@@ -60,6 +63,16 @@ void Actor::setTemp()
     m_permanent = false;
 }
 
+int Actor::getTicks()
+{
+    return m_ticks;
+}
+
+void Actor::addTick()
+{
+    m_ticks++;
+}
+
 //////////////////////////////////////////////////////////////
 // Person Implementation                                    //
 //////////////////////////////////////////////////////////////
@@ -77,6 +90,8 @@ Actor(world, imageID, startX, startY, dir, size, depth)
 Person::~Person()
 {
     setVisible(false);
+    setDead();
+    setPickableIceman(false);
 }
 
 int Person::getHP()
@@ -110,6 +125,16 @@ int Iceman::getSquirts()
 int Iceman::getCharge()
 {
     return m_charge;
+}
+
+void Iceman::addSquirts()
+{
+    m_squirts += 5;
+}
+
+void Iceman::addCharge()
+{
+    m_charge++;
 }
 
 int Iceman::getGold()
@@ -249,13 +274,15 @@ void Ice::doSomething() {}
 Gold::Gold(StudentWorld* world, int x, int y):
 Actor(world, IID_GOLD, x, y, right, 1.0, 2)
 {
-    setVisible(false);
+    setVisible(true);
     m_pickableProtester = false;
 }
 
 Gold::~Gold()
 {
     setVisible(false);
+    setDead();
+    setPickableIceman(false);
     setTemp();
 }
 
@@ -264,7 +291,7 @@ bool Gold::isPickableProtester()
     return m_pickableProtester;
 }
 
-void Gold::setPickableProtester()
+void Gold::setPickableProtester()       //todo: need this???
 {
     m_pickableProtester = true;
     setPickableIceman(false);
@@ -297,12 +324,14 @@ void Gold::doSomething()
 Barrel::Barrel(StudentWorld* world, int x, int y):
 Actor(world, IID_BARREL, x, y, right, 1.0, 2)
 {
-    setVisible(false);
+    setVisible(true);
 }
 
 Barrel::~Barrel()
 {
     setVisible(false);
+    setDead();
+    setPickableIceman(false);
 }
 
 void Barrel::doSomething()
@@ -328,19 +357,22 @@ void Barrel::doSomething()
 //////////////////////////////////////////////////////////////
 
 Boulder::Boulder(StudentWorld* world, int x, int y):
-Actor(world, IID_BARREL, x, y, down, 1.0, 1)
+Actor(world, IID_BOULDER, x, y, down, 1.0, 1)
 {
     setPickableIceman(false);
     m_stable = true;
-    m_falling = false;
+    setFalling(false);
 }
 
 Boulder::~Boulder()
 {
     setVisible(false);
+    setDead();
+    setPickableIceman(false);
+    setFalling(false);
 }
 
-bool Boulder::getStability()
+bool Boulder::isStable()
 {
     return m_stable;
 }
@@ -350,33 +382,118 @@ void Boulder::setUnstable()
     m_stable = false;
 }
 
-bool Boulder::getFalling()
+bool Boulder::isFalling()
 {
     return m_falling;
 }
 
-void Boulder::setFalling()
+void Boulder::setFalling(bool fall)
 {
-    m_falling = true;
+    m_falling = fall;
+}
+
+// makes boulder fall one unit down
+void Boulder::fall(int x, int y)
+{
+    moveTo(getX(), getY()-1);
+    int r = getY();
+    for (int c = getX(); c < getX()+SPRITE_WIDTH; c++)
+        if (getWorld()->isIce(c, r))
+        {
+            setDead();
+            setVisible(false);
+        }
 }
 
 void Boulder::doSomething()
 {
     if (!isAlive())
         return;
+    if(!isStable())   // count ticks while unstable
+        addTick();
+    bool iceUnder = false;  // check is is under boulder
+    if (isStable())
+    {
+        int r = getY()-1;
+        for(int c = getX(); c < getX()+SPRITE_WIDTH; c++)
+        {
+            if(getWorld()->isIce(c,r))
+            {
+                iceUnder = true;
+                break;
+            }
+        }
+    }
+    if(!iceUnder)   // set to waiting if not ice under
+        setUnstable();
+    // falls if unstable for ticks > 30
+    if(!isFalling() && !isStable() && getTicks() > 30)
+    {
+        setFalling(true);
+        getWorld()->playSound(SOUND_FALLING_ROCK);
+    }
+    if(isFalling())
+        fall(getX(), getY());
 }
 
 //////////////////////////////////////////////////////////////
 // SonarKit Implementation                                  //
 //////////////////////////////////////////////////////////////
 
-//SonarKit::SonarKit(StudentWorld* world, int x, int y):
-//Actor(world, IID_SONAR, x, y, right, 1.0, 2)
-//{
-//    setVisible(true);
-//    setTemp();
-//
-//}
+SonarKit::SonarKit(StudentWorld* world, int x, int y):
+Actor(world, IID_SONAR, x, y, right, 1.0, 2)
+{
+    setVisible(true);
+    setTemp();
+}
+SonarKit::~SonarKit()
+{
+    setVisible(false);
+    setDead();
+    setPickableIceman(false);
+}
+
+void SonarKit::doSomething()
+{
+    if (!isAlive())
+        return;
+    // Have iceman pickup item if nearby
+    if(getWorld()->wiRadIceman(this, 3.0) && isVisible())
+    {
+        setDead();
+        getWorld()->addItemIceman(StudentWorld::sonar);
+    }
+}
+
+//////////////////////////////////////////////////////////////
+// WaterPool Implementation                                 //
+//////////////////////////////////////////////////////////////
+
+WaterPool::WaterPool(StudentWorld* world, int x, int y):
+Actor(world, IID_WATER_POOL, x, y, right, 1.0, 2)
+{
+    setVisible(true);
+    setTemp();
+}
+
+WaterPool::~WaterPool()
+{
+    setVisible(false);
+    setDead();
+    setPickableIceman(false);
+}
+
+void WaterPool::doSomething()
+{
+    if (!isAlive())
+        return;
+    // Have iceman pickup item if nearby
+    if(getWorld()->wiRadIceman(this, 3.0) && isVisible())
+    {
+        setDead();
+        getWorld()->addItemIceman(StudentWorld::water);
+    }
+}
 
 
 

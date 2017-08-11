@@ -24,7 +24,7 @@ StudentWorld::StudentWorld(std::string assetDir)
 
 StudentWorld::~StudentWorld()
 {
-    cleanUp();
+    cleanUp();           // TODO: Fix!!! cant call cleanup
 }
 
 int StudentWorld::init()
@@ -55,8 +55,10 @@ int StudentWorld::init()
     int G = max(5 - lvl/2, 2);  // gold
     int L = min(2 + lvl, 21);   // barrels
     
+    insertRandom(B, boulder);
     insertRandom(G, gold);
     insertRandom(L, barrel);
+
     
     
     
@@ -76,7 +78,7 @@ int StudentWorld::move()
     for (int iceX = imX; iceX < imX + SPRITE_WIDTH; iceX++)
     {
         for (int iceY = imY; iceY < imY + SPRITE_HEIGHT; iceY++)
-            if(digIce(iceX, iceY))
+            if(clearIce(iceX, iceY))
                 dug = true;
     }
     if (dug)        // only play sound if ice was dug
@@ -95,7 +97,6 @@ int StudentWorld::move()
         }
         else
             it++;
-        
     }
     
     //TODO: check for barrels
@@ -167,7 +168,11 @@ void StudentWorld::insertRandom(int amt, ItemType type)
             switch(type)
             {
                 case boulder:
-                    
+                    m_items.push_back(new Boulder(this, x, y));
+                    // remove ice behind boulder
+                    for (int r = y; r < y+SPRITE_HEIGHT; r++)
+                        for (int c = x; c< x+SPRITE_WIDTH; c++)
+                            clearIce(c, r);
                     break;
                 case gold:
                     m_items.push_back(new Gold(this, x, y));
@@ -196,24 +201,23 @@ bool StudentWorld::isIce(int x, int y)
 }
 
 // normally delete ice
-void StudentWorld::clearIce(int x, int y)
-{
-    if (isIce(x, y))
-    {
-        delete m_ice[y][x];
-        m_ice[y][x] = nullptr;
-    }
-}
+//void StudentWorld::clearIce(int x, int y)
+//{
+//    if (isIce(x, y))
+//    {
+//        delete m_ice[y][x];
+//        m_ice[y][x] = nullptr;
+//    }
+//}
 
-// removes ice when Iceman digs
-bool StudentWorld::digIce(int x, int y)
+// returns true if ice is removed
+bool StudentWorld::clearIce(int x, int y)
 {
     if (isIce(x, y))
     {
         delete m_ice[y][x];
         m_ice[y][x] = nullptr;
         return true;
-//        playSound(SOUND_DIG);
     }
     return false;
 }
@@ -263,9 +267,6 @@ void StudentWorld::addItemIceman(ItemType type)
 {
     switch (type)
     {
-        case boulder:
-            playSound(SOUND_FALLING_ROCK);
-            break;
         case gold:
             playSound(SOUND_GOT_GOODIE);
             increaseScore(10);
@@ -277,9 +278,13 @@ void StudentWorld::addItemIceman(ItemType type)
             break;
         case sonar:
             playSound(SOUND_GOT_GOODIE);
+            increaseScore(75);
+            getIceman()->addCharge();
             break;
         case water:
             playSound(SOUND_GOT_GOODIE);
+            increaseScore(100);
+            getIceman()->addSquirts();
             break;
     }
 }

@@ -16,6 +16,7 @@ public:
           double size, unsigned int depth);
     virtual ~Actor();
     virtual void doSomething() = 0;
+    void addTick();
     
     StudentWorld* getWorld();
     bool isAlive();
@@ -23,13 +24,16 @@ public:
     bool isPickableIceman();
     void setPickableIceman(bool pickable);
     bool isPermanent();
+    int getTicks();
     void setTemp();
+
     
 private:
     StudentWorld* m_world;
     bool m_alive;
     bool m_permanent;
     bool m_pickableIceman;
+    int m_ticks;
 };
 
 class Person: public Actor
@@ -62,7 +66,9 @@ public:
     virtual ~Iceman();
     
     int getSquirts();
+    void addSquirts();
     int getCharge();
+    void addCharge();
     int getGold();
     void addGold();
     // TODO: getBarrels
@@ -118,10 +124,11 @@ public:
     Boulder(StudentWorld* world, int x, int y);
     virtual ~Boulder();
     
-    bool getStability();
+    bool isStable();
     void setUnstable();
-    bool getFalling();
-    void setFalling();
+    bool isFalling();
+    void setFalling(bool fall);
+    void fall(int x, int y);
     
     virtual void doSomething();
 private:
@@ -129,17 +136,28 @@ private:
     bool m_falling;
 };
 
-//class SonarKit: public Actor
-//{
-//public:
-//    SonarKit(StudentWorld* world, int x, int y);
-//    virtual ~SonarKit();
-//};
+class SonarKit: public Actor
+{
+public:
+    SonarKit(StudentWorld* world, int x, int y);
+    virtual ~SonarKit();
+    
+    virtual void doSomething();
+    
+};
+
+class WaterPool: public Actor
+{
+    WaterPool(StudentWorld* world, int x, int y);
+    virtual ~WaterPool();
+    
+    virtual void doSomething();
+};
 
 //TODO: Classes to implement
 //class Squirt: public Actor {};
 
-//class Pool: public Actor {};
+
 //class Protester: public Person {};
 //class HardcoreProtester: public Protester {};
 
