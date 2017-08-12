@@ -139,7 +139,7 @@ private:
 class SonarKit: public Actor
 {
 public:
-    SonarKit(StudentWorld* world, int x, int y);
+    SonarKit(StudentWorld* world);
     virtual ~SonarKit();
     
     virtual void doSomething();
@@ -148,6 +148,7 @@ public:
 
 class WaterPool: public Actor
 {
+public:
     WaterPool(StudentWorld* world, int x, int y);
     virtual ~WaterPool();
     

@@ -51,15 +51,12 @@ int StudentWorld::init()
     // add all other actors
     int lvl = getLevel();
     int B = min(lvl/2 + 2, 9);  // boulders
-    int G = max(5 - lvl/2, 2);  // gold
+    int N = max(5 - lvl/2, 2);  // gold
     int L = min(2 + lvl, 21);   // barrels
     
     insertRandom(B, boulder);
-    insertRandom(G, gold);
+    insertRandom(N, gold);
     insertRandom(L, barrel);
-
-    
-    
     
     
     
@@ -97,6 +94,16 @@ int StudentWorld::move()
         else
             it++;
     }
+    
+    // randomly add goodie, do nothing if returns -1
+    int G = getLevel()*25 + 300;
+    int chance = chanceOfGoodie(G);
+    if (chance == 0)    // 1 in 5 chance sonar
+        addActor(new SonarKit(this));
+    else if (chance > 0)    // 4 in 5 chance water
+        addPool();
+
+        
     
     //TODO: check for barrels
     
@@ -156,6 +163,16 @@ void StudentWorld::setDisplayText()
     setGameStatText(str);
 }
 
+// generate chance of adding goodie and which goodie
+int StudentWorld::chanceOfGoodie(int chance)
+{
+    int num = chance/2;
+    int random = rand() % chance+1;
+    if (random == num)
+        return rand() % 5;
+    return -1;
+}
+
 // insert object at random location
 void StudentWorld::insertRandom(int amt, ActorType type)
 {
@@ -184,11 +201,8 @@ void StudentWorld::insertRandom(int amt, ActorType type)
                 case barrel:
                     addActor(new Barrel(this, x, y));
                     break;
-                case sonar:
-                    
-                    break;
                 case water:
-                    
+                    addActor(new WaterPool(this, x, y));
                     break;
             }
             i++;
@@ -242,10 +256,6 @@ bool StudentWorld::isBoundary(ActorType type, int x, int y) const
     if (type == gold || type == barrel || type == boulder)
         if (x >= (30-SPRITE_WIDTH) && x < 34 && y >= (4-SPRITE_HEIGHT) && y < 60 )
             return true;
-
-    // additional water pool and sonar kit boundaries
-    //if (a->getID() == IID_SONAR || a->getID() == IID_WATER_POOL)
-        
     return false;
 }
 
@@ -257,12 +267,13 @@ bool StudentWorld::isBoundary(ActorType type, int x, int y) const
 //    return false;
 //}
 
+// returns true if boulder is within distance of 3
 bool StudentWorld::isBoulder(int x, int y) const
 {
     vector<Actor*>::const_iterator it = m_actors.begin();
     while (it != m_actors.end())
     {
-        if ((*it)->getID() == IID_BOULDER)
+        if ((*it)->getID() == IID_BOULDER && (*it) != this) /// fix so doesn't recognize itself
         {
             int boX = (*it)->getX();
             int boY = (*it)->getY();
@@ -347,11 +358,19 @@ int StudentWorld::getBarrels() const
     return barrels;
 }
 
+// add actors to m_actors vector
 void StudentWorld::addActor(Actor* add)
 {
     m_actors.push_back(add);
 }
 
+// add pool to random location in tunnel
+void StudentWorld::addPool()
+{
+    int x = 30;
+    int y = 4 + rand() % 46;
+    addActor(new WaterPool(this, x, y));
+}
 //void StudentWorld::showNearbyItems(int x, int y)
 //{
 //    int itemX, itemY, type;

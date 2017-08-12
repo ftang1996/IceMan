@@ -49,7 +49,10 @@ public:
     void addObjIceman(ActorType type);
     int getBarrels() const;
     void addActor(Actor* add);
+    void addPool();
 
+    int chanceOfGoodie(int chance);
+    
 
 //    void showNearbyItems(int x, int y);
 //    bool hitObject(int perX, int perY);

@@ -424,8 +424,8 @@ void Boulder::doSomething()
 // SonarKit Implementation                                  //
 //////////////////////////////////////////////////////////////
 
-SonarKit::SonarKit(StudentWorld* world, int x, int y):
-Actor(world, IID_SONAR, x, y, right, 1.0, 2)
+SonarKit::SonarKit(StudentWorld* world):
+Actor(world, IID_SONAR, 0, 60, right, 1.0, 2)
 {
     setVisible(true);
     setTemp();
