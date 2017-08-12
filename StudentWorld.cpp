@@ -118,9 +118,14 @@ void StudentWorld::cleanUp()
     // TODO: Delete items
 }
 
-Iceman* StudentWorld::getIceman() const
+Iceman* StudentWorld::getIceman()
 {
     return m_iceman;
+}
+
+vector<Actor*> StudentWorld::getActors()
+{
+    return m_actors;
 }
 
 void StudentWorld::setDisplayText()
@@ -152,7 +157,7 @@ void StudentWorld::setDisplayText()
 }
 
 // insert object at random location
-void StudentWorld::insertRandom(int amt, ObjType type)
+void StudentWorld::insertRandom(int amt, ActorType type)
 {
     int i = 0;
     while (i < amt)
@@ -162,7 +167,7 @@ void StudentWorld::insertRandom(int amt, ObjType type)
         int y = rand() % (ICE_GRID_HEIGHT - SPRITE_WIDTH + 1);
         
         // generate object if coordinates meet distance requirement
-        if (placeNewObj(x, y) && !isTunnel(x, y))
+        if (euclidian6(x, y) && !isBoundary(type, x, y))
         {
             switch(type)
             {
@@ -174,10 +179,10 @@ void StudentWorld::insertRandom(int amt, ObjType type)
                             clearIce(c, r);
                     break;
                 case gold:
-                    m_actors.push_back(new Gold(this, x, y));
+                    addActor(new Gold(this, x, y));
                     break;
                 case barrel:
-                    m_actors.push_back(new Barrel(this, x, y));
+                    addActor(new Barrel(this, x, y));
                     break;
                 case sonar:
                     
@@ -222,21 +227,35 @@ bool StudentWorld::clearIce(int x, int y)
 }
 
 // checks for edges of screen
-bool StudentWorld::isBoundary(int x, int y) const
+bool StudentWorld::isBoundary(ActorType type, int x, int y) const
 {
-    // right boundary needs to acct for image size
+    // window boundary
     if (x < 0 || x > ICE_GRID_WIDTH - SPRITE_WIDTH || y < 0 || y > ICE_GRID_HEIGHT)
         return true;
+    
+    // additional boulder boundaries
+    if (type == boulder)
+        if (x < 0 || x > 60 - SPRITE_WIDTH || y < 20 || y > 56 - SPRITE_HEIGHT)
+            return true;
+    
+    // additional gold and barrel boundaries
+    if (type == gold || type == barrel || type == boulder)
+        if (x >= (30-SPRITE_WIDTH) && x < 34 && y >= (4-SPRITE_HEIGHT) && y < 60 )
+            return true;
+
+    // additional water pool and sonar kit boundaries
+    //if (a->getID() == IID_SONAR || a->getID() == IID_WATER_POOL)
+        
     return false;
 }
 
 // returns true if location is in central tunnel
-bool StudentWorld::isTunnel(int x, int y) const
-{
-    if (x >= (30-SPRITE_WIDTH) && x < 34 && y >= (4-SPRITE_HEIGHT) && y < 60 )
-        return true;
-    return false;
-}
+//bool StudentWorld::isTunnel(int x, int y) const
+//{
+//    if (x >= (30-SPRITE_WIDTH) && x < 34 && y >= (4-SPRITE_HEIGHT) && y < 60 )
+//        return true;
+//    return false;
+//}
 
 bool StudentWorld::isBoulder(int x, int y) const
 {
@@ -247,39 +266,8 @@ bool StudentWorld::isBoulder(int x, int y) const
         {
             int boX = (*it)->getX();
             int boY = (*it)->getY();
-            if (distance(x, y, boX, boY) < 4.0)
+            if (distance(x, y, boX, boY) < 3.0)
                 return true;
-//            int c = x; int r = y;
-//            int boX = (*it)->getX();
-//            int boY = (*it)->getY();
-//            switch (dir)
-//            {
-//                case Actor::up:
-//                    r = y+4;
-//                    while (c < x+SPRITE_WIDTH)
-//                    {
-//                        if (r == boY && c >= boX && c < boX+SPRITE_WIDTH)
-//                            return true;
-//                        c++;
-//                    }
-//                    break;
-//                case Actor::down:
-//                                        
-//                default:
-////                    break;
-////            }
-//            if(wiRadIceman(*it, 4.0))
-//                return true;
-//            int boX = (*it)->getX();
-//            int boY = (*it)->getY();
-
-//            for(int r = y; r < y+SPRITE_HEIGHT; r++)
-//            {
-//                for(int c = x; r < x+SPRITE_WIDTH; x++)
-//                    if (c >= boX && c < boX+SPRITE_WIDTH &&
-//                        r >= boY && r < boY+SPRITE_HEIGHT)
-//                        return true;
-//            }
         }
         it++;
     }
@@ -292,7 +280,7 @@ double StudentWorld::distance(int x1, int y1, int x2, int y2) const
 }
 
 // checks if new object distance is greater than radius of existing objects
-bool StudentWorld::placeNewObj(int x, int y) const
+bool StudentWorld::euclidian6(int x, int y) const
 {
     int objX, objY;
     for (int i = 0; i < m_actors.size(); i++)
@@ -319,7 +307,7 @@ bool StudentWorld::wiRadIceman(Actor* a, double radius) const
 }
 
 // add objects to iceman inventory
-void StudentWorld::addObjIceman(ObjType type)
+void StudentWorld::addObjIceman(ActorType type)
 {
     switch (type)
     {
@@ -357,6 +345,11 @@ int StudentWorld::getBarrels() const
         it++;
     }
     return barrels;
+}
+
+void StudentWorld::addActor(Actor* add)
+{
+    m_actors.push_back(add);
 }
 
 //void StudentWorld::showNearbyItems(int x, int y)

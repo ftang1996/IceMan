@@ -164,7 +164,7 @@ void Iceman::doSomething()
                 if (dir == up)
                 {
                     // still animates at boundaries
-                    if (getWorld()->isBoundary(x, y+1))
+                    if (getWorld()->isBoundary(StudentWorld::iceman, x, y+1))
                         y--;
                     // don't move if boulder
                     if (!getWorld()->isBoulder(x, y+1))
@@ -176,7 +176,7 @@ void Iceman::doSomething()
             case KEY_PRESS_DOWN:
                 if (dir == down)
                 {
-                    if (getWorld()->isBoundary(x, y-1))
+                    if (getWorld()->isBoundary(StudentWorld::iceman, x, y-1))
                         y++;
                     if (!getWorld()->isBoulder(x, y-1))
                         moveTo(x, y-1);
@@ -187,7 +187,7 @@ void Iceman::doSomething()
             case KEY_PRESS_LEFT:
                 if (dir == left)
                 {
-                    if (getWorld()->isBoundary(x-1, y))
+                    if (getWorld()->isBoundary(StudentWorld::iceman, x-1, y))
                         x++;
                     if (!getWorld()->isBoulder(x-1, y))
                         moveTo(x-1, y);
@@ -198,7 +198,7 @@ void Iceman::doSomething()
             case KEY_PRESS_RIGHT:
                 if (dir == right)
                 {
-                    if (getWorld()->isBoundary(x+1, y))
+                    if (getWorld()->isBoundary(StudentWorld::iceman, x+1, y))
                         x--;
                     if (!getWorld()->isBoulder(x+1, y))
                         moveTo(x+1, y);
@@ -206,66 +206,28 @@ void Iceman::doSomething()
                 else
                     setDirection(right);
                 break;
+            case KEY_PRESS_TAB:
+                dropGold();
+                break;
             default:
                 break;
         }
     }
 }
 
+void Iceman::dropGold()
+{
+    if (getGold() > 0)
+    {
+        int x = getX();
+        int y = getY();
+        Gold* drGold = new Gold(getWorld(), x, y);
+        drGold->droppedGold();
+        
+        getWorld()->addActor(drGold);
+    }
+}
 
-
-// Moves only if destination is valid and does appropriate
-// character interaction with any objects
-//void Iceman::dig(int x, int y, Direction dir)
-//{
-//    switch(dir)
-//    {
-//        case up:
-//            // if boundary, animate in same location, do not move
-//            if (isBoundary(x, y))
-//                y--;
-//            else
-//            {
-//                for (int c = x; c < x+4; c++)
-//                {
-//                    int r = y+3;
-//                    getWorld()->digIce(c, r);
-//                }
-//            }
-//            break;
-//        case down:
-//            if (isBoundary(x, y))
-//                y++;
-//            else
-//                for (int c = x; c < x+4; c++)
-//                {
-//                    int r = y;
-//                    getWorld()->digIce(c, r);
-//                }
-//            break;
-//        case left:
-//            if (isBoundary(x, y))
-//                x++;
-//            else
-//                for (int r = y; r < y+4; r++)
-//                {
-//                    int c = x;
-//                    getWorld()->digIce(c, r);
-//                }
-//            break;
-//        case right:
-//            if (isBoundary(x, y))
-//                x--;
-//            else
-//                for (int r = y; r < y+4; r++)
-//                {
-//                    int c = x+3;
-//                    getWorld()->digIce(c, r);
-//                }
-//            break;
-//    }
-//        moveTo(x, y);
-//}
 
 //////////////////////////////////////////////////////////////
 // Ice Implementation                                       //
@@ -300,8 +262,6 @@ Gold::~Gold()
 {
     setVisible(false);
     setDead();
-    setPickableIceman(false);
-    setTemp();
 }
 
 bool Gold::isPickableProtester() const
@@ -309,30 +269,36 @@ bool Gold::isPickableProtester() const
     return m_pickableProtester;
 }
 
-void Gold::setPickableProtester()       //todo: need this???
+void Gold::droppedGold()       //todo: need this???
 {
-    m_pickableProtester = true;
     setPickableIceman(false);
     setTemp();
+    m_pickableProtester = true;
 }
 
 void Gold::doSomething()
 {
     if(!isAlive())
         return;
+    if(!isPermanent())
+        addTick();
     // Reveal item if nearby
-    if(!isVisible() && isAlive() && getWorld()->wiRadIceman(this, 4.0))
+    if(!isVisible() && isPermanent() && getWorld()->wiRadIceman(this, 4.0))
     {
         setVisible(true);
         return;
     }
-    
     // Have iceman pickup item if nearby
-    if(getWorld()->wiRadIceman(this, 3.0) && isVisible() && isPickableIceman())
+    else if(getWorld()->wiRadIceman(this, 3.0) && isVisible() && isPickableIceman())
     {
         setDead();
         getWorld()->addObjIceman(StudentWorld::gold);
     }
+    else if (getTicks() > 100)
+        setDead();
+    
+
+    
 }
 
 //////////////////////////////////////////////////////////////
@@ -416,7 +382,7 @@ void Boulder::fall(int x, int y)
     moveTo(getX(), getY()-1);
     int r = getY();
     for (int c = getX(); c < getX()+SPRITE_WIDTH; c++)
-        if (getWorld()->isIce(c, r))
+        if (getWorld()->isIce(c, r) || getWorld()->isBoulder(c, r))
         {
             setDead();
             setVisible(false);

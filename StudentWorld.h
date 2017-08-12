@@ -22,7 +22,8 @@ class Ice;
 class StudentWorld : public GameWorld
 {
 public:
-    enum ObjType {boulder, gold, barrel, sonar, water};
+    enum ActorType {iceman, protestor, hardcore,
+        boulder, gold, barrel, sonar, water};
     StudentWorld(std::string assetDir);
     virtual ~StudentWorld();
     
@@ -30,23 +31,24 @@ public:
     virtual int move();
     virtual void cleanUp();
 
-    Iceman* getIceman() const;
-    std::vector<Actor*> getActors() const;
+    Iceman* getIceman();
+    std::vector<Actor*> getActors();
     void setDisplayText();
-    void insertRandom(int amt, ObjType type);
+    void insertRandom(int amt, ActorType type);
     
     bool isIce(int x, int y) const;
     bool clearIce(int x, int y);
 //    bool digIce(int x, int y);
 
-    bool isBoundary(int x, int y) const;
-    bool isTunnel(int x, int y) const;
+    bool isBoundary(ActorType type, int x, int y) const;
+    //bool isTunnel(int x, int y) const;
     bool isBoulder(int x, int y) const;
     double distance(int x1, int y1, int x2, int y2) const;
-    bool placeNewObj(int x, int y) const;
+    bool euclidian6(int x, int y) const;
     bool wiRadIceman(Actor* a, double radius) const;
-    void addObjIceman(ObjType type);
+    void addObjIceman(ActorType type);
     int getBarrels() const;
+    void addActor(Actor* add);
 
 
 //    void showNearbyItems(int x, int y);

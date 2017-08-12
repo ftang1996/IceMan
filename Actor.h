@@ -74,6 +74,7 @@ public:
     // TODO: getBarrels
 
     virtual void doSomething();
+    void dropGold();
     // void dig(int x, int y, Direction dir);
 
 private:
@@ -99,7 +100,7 @@ public:
     virtual ~Gold();
 
     bool isPickableProtester() const;
-    void setPickableProtester();
+    void droppedGold();
     
     virtual void doSomething();
 private:
