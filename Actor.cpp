@@ -27,12 +27,12 @@ Actor::~Actor()
     setPickableIceman(false);
 }
 
-StudentWorld* Actor::getWorld()
+StudentWorld* Actor::getWorld() const
 {
     return m_world;
 }
 
-bool Actor::isAlive()
+bool Actor::isAlive() const
 {
     return m_alive;
 }
@@ -43,7 +43,7 @@ void Actor::setDead()
     setVisible(false);
 }
 
-bool Actor::isPickableIceman()
+bool Actor::isPickableIceman() const
 {
     return m_pickableIceman;
 }
@@ -53,7 +53,7 @@ void Actor::setPickableIceman(bool pickable)
     m_pickableIceman = pickable;
 }
 
-bool Actor::isPermanent()
+bool Actor::isPermanent() const
 {
     return m_permanent;
 }
@@ -63,7 +63,7 @@ void Actor::setTemp()
     m_permanent = false;
 }
 
-int Actor::getTicks()
+int Actor::getTicks() const
 {
     return m_ticks;
 }
@@ -94,7 +94,7 @@ Person::~Person()
     setPickableIceman(false);
 }
 
-int Person::getHP()
+int Person::getHP() const
 {
     return m_hp;
 }
@@ -117,12 +117,12 @@ Iceman::~Iceman()
     setDead();
 }
 
-int Iceman::getSquirts()
+int Iceman::getSquirts() const
 {
     return m_squirts;
 }
 
-int Iceman::getCharge()
+int Iceman::getCharge() const
 {
     return m_charge;
 }
@@ -137,7 +137,7 @@ void Iceman::addCharge()
     m_charge++;
 }
 
-int Iceman::getGold()
+int Iceman::getGold() const
 {
     return m_gold;
 }
@@ -156,29 +156,53 @@ void Iceman::doSomething()
     int key;
     if (getWorld()->getKey(key))    // get player key inputs
     {
+        int x = getX();
+        int y = getY();
         switch(key)
         {
             case KEY_PRESS_UP:
                 if (dir == up)
-                    moveTo(getX(), getY()+1);
+                {
+                    // still animates at boundaries
+                    if (getWorld()->isBoundary(x, y+1))
+                        y--;
+                    // don't move if boulder
+                    if (!getWorld()->isBoulder(x, y+1))
+                        moveTo(x, y+1);
+                }
                 else
                     setDirection(up);
                 break;
             case KEY_PRESS_DOWN:
                 if (dir == down)
-                    moveTo(getX(), getY()-1);
+                {
+                    if (getWorld()->isBoundary(x, y-1))
+                        y++;
+                    if (!getWorld()->isBoulder(x, y-1))
+                        moveTo(x, y-1);
+                }
                 else
                     setDirection(down);
                 break;
             case KEY_PRESS_LEFT:
                 if (dir == left)
-                   moveTo(getX()-1, getY());
+                {
+                    if (getWorld()->isBoundary(x-1, y))
+                        x++;
+                    if (!getWorld()->isBoulder(x-1, y))
+                        moveTo(x-1, y);
+                }
                 else
                     setDirection(left);
                 break;
             case KEY_PRESS_RIGHT:
                 if (dir == right)
-                    moveTo(getX()+1, getY());
+                {
+                    if (getWorld()->isBoundary(x+1, y))
+                        x--;
+                    if (!getWorld()->isBoulder(x+1, y))
+                        moveTo(x+1, y);
+                }
                 else
                     setDirection(right);
                 break;
@@ -188,13 +212,7 @@ void Iceman::doSomething()
     }
 }
 
-bool Iceman::isBoundary(int x, int y)
-{
-    // right boundary needs to acct for image size
-    if (x < 0 || x > ICE_GRID_WIDTH - SPRITE_WIDTH || y < 0 || y > ICE_GRID_HEIGHT)
-        return true;
-    return false;
-}
+
 
 // Moves only if destination is valid and does appropriate
 // character interaction with any objects
@@ -286,7 +304,7 @@ Gold::~Gold()
     setTemp();
 }
 
-bool Gold::isPickableProtester()
+bool Gold::isPickableProtester() const
 {
     return m_pickableProtester;
 }
@@ -313,7 +331,7 @@ void Gold::doSomething()
     if(getWorld()->wiRadIceman(this, 3.0) && isVisible() && isPickableIceman())
     {
         setDead();
-        getWorld()->addItemIceman(StudentWorld::gold);
+        getWorld()->addObjIceman(StudentWorld::gold);
     }
 }
 
@@ -348,7 +366,7 @@ void Barrel::doSomething()
     if(getWorld()->wiRadIceman(this, 3.0) && isVisible())
     {
         setDead();
-        getWorld()->addItemIceman(StudentWorld::barrel);
+        getWorld()->addObjIceman(StudentWorld::barrel);
     }
 }
 
@@ -372,7 +390,7 @@ Boulder::~Boulder()
     setFalling(false);
 }
 
-bool Boulder::isStable()
+bool Boulder::isStable() const
 {
     return m_stable;
 }
@@ -382,7 +400,7 @@ void Boulder::setUnstable()
     m_stable = false;
 }
 
-bool Boulder::isFalling()
+bool Boulder::isFalling() const
 {
     return m_falling;
 }
@@ -461,7 +479,7 @@ void SonarKit::doSomething()
     if(getWorld()->wiRadIceman(this, 3.0) && isVisible())
     {
         setDead();
-        getWorld()->addItemIceman(StudentWorld::sonar);
+        getWorld()->addObjIceman(StudentWorld::sonar);
     }
 }
 
@@ -491,7 +509,7 @@ void WaterPool::doSomething()
     if(getWorld()->wiRadIceman(this, 3.0) && isVisible())
     {
         setDead();
-        getWorld()->addItemIceman(StudentWorld::water);
+        getWorld()->addObjIceman(StudentWorld::water);
     }
 }
 

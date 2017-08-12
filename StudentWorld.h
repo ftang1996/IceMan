@@ -22,7 +22,7 @@ class Ice;
 class StudentWorld : public GameWorld
 {
 public:
-    enum ItemType {boulder, gold, barrel, sonar, water};
+    enum ObjType {boulder, gold, barrel, sonar, water};
     StudentWorld(std::string assetDir);
     virtual ~StudentWorld();
     
@@ -30,22 +30,25 @@ public:
     virtual int move();
     virtual void cleanUp();
 
-    Iceman* getIceman();
+    Iceman* getIceman() const;
+    std::vector<Actor*> getActors() const;
     void setDisplayText();
-    void insertRandom(int amt, ItemType type);
+    void insertRandom(int amt, ObjType type);
     
-    bool isIce(int x, int y);
+    bool isIce(int x, int y) const;
     bool clearIce(int x, int y);
 //    bool digIce(int x, int y);
 
-    bool isTunnel(int x, int y);
-    double distance(int x1, int y1, int x2, int y2);
-    bool placeNewItem(int x, int y);
-    bool wiRadIceman(Actor* item, double radius);
-    void addItemIceman(ItemType type);
-    int getBarrels();
+    bool isBoundary(int x, int y) const;
+    bool isTunnel(int x, int y) const;
+    bool isBoulder(int x, int y) const;
+    double distance(int x1, int y1, int x2, int y2) const;
+    bool placeNewObj(int x, int y) const;
+    bool wiRadIceman(Actor* a, double radius) const;
+    void addObjIceman(ObjType type);
+    int getBarrels() const;
 
-//    bool isBoundary(int x, int y);
+
 //    void showNearbyItems(int x, int y);
 //    bool hitObject(int perX, int perY);
     
@@ -54,7 +57,7 @@ public:
 private:
     Iceman* m_iceman;
     Ice* m_ice[VIEW_WIDTH][VIEW_HEIGHT];
-    std::vector<Actor*> m_items;
+    std::vector<Actor*> m_actors;
 };
 
 #endif // STUDENTWORLD_H_

@@ -17,15 +17,16 @@ public:
     virtual ~Actor();
     virtual void doSomething() = 0;
     void addTick();
-    
-    StudentWorld* getWorld();
-    bool isAlive();
+    StudentWorld* getWorld() const;
+    bool isAlive() const;
     void setDead();
-    bool isPickableIceman();
+    bool isPickableIceman() const;
     void setPickableIceman(bool pickable);
-    bool isPermanent();
-    int getTicks();
+    bool isPermanent() const;
+    int getTicks() const;
     void setTemp();
+    
+
 
     
 private:
@@ -45,11 +46,10 @@ public:
     virtual ~Person();
     virtual void doSomething() = 0;
     
-    int getHP();
+    int getHP() const;
 
     
 
-    virtual bool isBoundary(int x, int y) = 0;
     // TODO:functions to implement
     // virtual void bonked();
     // virtual void annoyed();
@@ -65,16 +65,15 @@ public:
     Iceman(StudentWorld* world);
     virtual ~Iceman();
     
-    int getSquirts();
+    int getSquirts() const;
     void addSquirts();
-    int getCharge();
+    int getCharge() const;
     void addCharge();
-    int getGold();
+    int getGold() const;
     void addGold();
     // TODO: getBarrels
 
     virtual void doSomething();
-    virtual bool isBoundary(int x, int y);
     // void dig(int x, int y, Direction dir);
 
 private:
@@ -99,7 +98,7 @@ public:
     Gold(StudentWorld* world, int x, int y);
     virtual ~Gold();
 
-    bool isPickableProtester();
+    bool isPickableProtester() const;
     void setPickableProtester();
     
     virtual void doSomething();
@@ -124,9 +123,9 @@ public:
     Boulder(StudentWorld* world, int x, int y);
     virtual ~Boulder();
     
-    bool isStable();
+    bool isStable() const;
     void setUnstable();
-    bool isFalling();
+    bool isFalling() const;
     void setFalling(bool fall);
     void fall(int x, int y);
     
