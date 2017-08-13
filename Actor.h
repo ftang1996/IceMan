@@ -19,7 +19,7 @@ public:
     void addTick();
     StudentWorld* getWorld() const;
     bool isAlive() const;
-    void setDead();
+    virtual void setDead();
     bool isPickableIceman() const;
     void setPickableIceman(bool pickable);
     bool isPermanent() const;
@@ -45,8 +45,10 @@ public:
            double size = 1.0, unsigned int depth = 0);
     virtual ~Person();
     virtual void doSomething() = 0;
-    
+
+    void die();
     int getHP() const;
+    void setHP(int newHP);
 
     
 
@@ -67,14 +69,19 @@ public:
     
     int getSquirts() const;
     void addSquirts();
+    void decSquirt();
     int getCharge() const;
     void addCharge();
+    void decCharge();
     int getGold() const;
     void addGold();
     // TODO: getBarrels
 
     virtual void doSomething();
+    void useSonar();
     void dropGold();
+    void squirt();
+
     // void dig(int x, int y, Direction dir);
 
 private:
@@ -155,9 +162,18 @@ public:
     virtual void doSomething();
 };
 
-//TODO: Classes to implement
-//class Squirt: public Actor {};
+class Squirt: public Actor
+{
+public:
+    Squirt(StudentWorld* world, int x, int y, Direction dir);
+    virtual ~Squirt();
+    
+    virtual void doSomething();
+private:
+    int m_traveled;
+};
 
+//TODO: Classes to implement
 
 //class Protester: public Person {};
 //class HardcoreProtester: public Protester {};

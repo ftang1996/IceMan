@@ -1,5 +1,7 @@
 #include "Actor.h"
 #include "StudentWorld.h"
+#include <algorithm>
+
 
 using namespace std;
 
@@ -90,13 +92,24 @@ Actor(world, imageID, startX, startY, dir, size, depth)
 Person::~Person()
 {
     setVisible(false);
-    setDead();
+    die();
     setPickableIceman(false);
+}
+
+void Person::die()
+{
+    setDead();
+    setHP(0);
 }
 
 int Person::getHP() const
 {
     return m_hp;
+}
+
+void Person::setHP(int newHP)
+{
+    m_hp = newHP;
 }
 
 
@@ -107,7 +120,7 @@ int Person::getHP() const
 Iceman::Iceman(StudentWorld* world): Person(10, world, IID_PLAYER, 30, 60)
 {
     m_squirts = 5;
-    m_charge = 1;
+    m_charge = 10;
     m_gold = 0;
 }
 
@@ -130,6 +143,11 @@ int Iceman::getCharge() const
 void Iceman::addSquirts()
 {
     m_squirts += 5;
+}
+
+void Iceman::decSquirt()
+{
+    m_squirts--;
 }
 
 void Iceman::addCharge()
@@ -160,6 +178,9 @@ void Iceman::doSomething()
         int y = getY();
         switch(key)
         {
+            case KEY_PRESS_ESCAPE:
+                die();
+                break;
             case KEY_PRESS_UP:
                 if (dir == up)
                 {
@@ -167,7 +188,7 @@ void Iceman::doSomething()
                     if (getWorld()->isBoundary(StudentWorld::iceman, x, y+1))
                         y--;
                     // don't move if boulder
-                    if (!getWorld()->isBoulder(x, y+1))
+                    if (!getWorld()->isBoulder(this, x, y+1))
                         moveTo(x, y+1);
                 }
                 else
@@ -178,7 +199,7 @@ void Iceman::doSomething()
                 {
                     if (getWorld()->isBoundary(StudentWorld::iceman, x, y-1))
                         y++;
-                    if (!getWorld()->isBoulder(x, y-1))
+                    if (!getWorld()->isBoulder(this, x, y-1))
                         moveTo(x, y-1);
                 }
                 else
@@ -189,7 +210,7 @@ void Iceman::doSomething()
                 {
                     if (getWorld()->isBoundary(StudentWorld::iceman, x-1, y))
                         x++;
-                    if (!getWorld()->isBoulder(x-1, y))
+                    if (!getWorld()->isBoulder(this, x-1, y))
                         moveTo(x-1, y);
                 }
                 else
@@ -200,7 +221,7 @@ void Iceman::doSomething()
                 {
                     if (getWorld()->isBoundary(StudentWorld::iceman, x+1, y))
                         x--;
-                    if (!getWorld()->isBoulder(x+1, y))
+                    if (!getWorld()->isBoulder(this, x+1, y))
                         moveTo(x+1, y);
                 }
                 else
@@ -209,10 +230,34 @@ void Iceman::doSomething()
             case KEY_PRESS_TAB:
                 dropGold();
                 break;
+            case KEY_PRESS_SPACE:
+                squirt();
+                break;
+            case 'z':
+            case 'Z':
+                useSonar();
+                break;
             default:
                 break;
         }
     }
+}
+
+void Iceman::useSonar()
+{
+    if (getCharge() == 0)
+        return;
+    getWorld()->playSound(SOUND_SONAR);
+    vector <Actor*> actors = getWorld()->getActors();
+    vector<Actor*>::iterator it = actors.begin();
+    while (it != actors.end())
+    {
+        if (((*it)->getID() == IID_GOLD || (*it)->getID() == IID_BARREL)
+            && getWorld()->wiRadIceman((*it), 12.0))
+            (*it)->setVisible(true);
+        it++;
+    }
+    decCharge();
 }
 
 void Iceman::dropGold()
@@ -226,6 +271,40 @@ void Iceman::dropGold()
         
         getWorld()->addActor(drGold);
     }
+}
+
+void Iceman::squirt()
+{
+    if (getSquirts() > 0)
+    {
+        getWorld()->playSound(SOUND_PLAYER_SQUIRT);
+        int x = getX();
+        int y = getY();
+        Direction dir = getDirection();
+        Squirt* addSquirt;
+        switch (getDirection())
+        {
+            case up:
+                addSquirt = new Squirt(getWorld(), x, y+4, dir);
+                break;
+            case down:
+                addSquirt = new Squirt(getWorld(), x, y-1, dir);
+                break;
+            case left:
+                addSquirt = new Squirt(getWorld(), x-1, y, dir);
+                break;
+            case right:
+                addSquirt = new Squirt(getWorld(), x+4, y, dir);
+                break;
+        }
+        getWorld()->addActor(addSquirt);
+        decSquirt();
+    }
+}
+
+void Iceman::decCharge()
+{
+    m_charge--;
 }
 
 
@@ -254,7 +333,7 @@ void Ice::doSomething() {}
 Gold::Gold(StudentWorld* world, int x, int y):
 Actor(world, IID_GOLD, x, y, right, 1.0, 2)
 {
-    setVisible(true);
+    setVisible(false);
     m_pickableProtester = false;
 }
 
@@ -308,7 +387,7 @@ void Gold::doSomething()
 Barrel::Barrel(StudentWorld* world, int x, int y):
 Actor(world, IID_BARREL, x, y, right, 1.0, 2)
 {
-    setVisible(true);
+    setVisible(false);
 }
 
 Barrel::~Barrel()
@@ -382,7 +461,7 @@ void Boulder::fall(int x, int y)
     moveTo(getX(), getY()-1);
     int r = getY();
     for (int c = getX(); c < getX()+SPRITE_WIDTH; c++)
-        if (getWorld()->isIce(c, r) || getWorld()->isBoulder(c, r))
+        if (getWorld()->isIce(c, r) || getWorld()->isBoulder(this, c, r))
         {
             setDead();
             setVisible(false);
@@ -393,7 +472,7 @@ void Boulder::doSomething()
 {
     if (!isAlive())
         return;
-    if(!isStable())   // count ticks while unstable
+    if (!isStable())   // count ticks while unstable
         addTick();
     bool iceUnder = false;  // check is is under boulder
     if (isStable())
@@ -408,15 +487,15 @@ void Boulder::doSomething()
             }
         }
     }
-    if(!iceUnder)   // set to waiting if not ice under
+    if (!iceUnder)   // set to waiting if not ice under
         setUnstable();
     // falls if unstable for ticks > 30
-    if(!isFalling() && !isStable() && getTicks() > 30)
+    if (!isFalling() && !isStable() && getTicks() > 30)
     {
         setFalling(true);
         getWorld()->playSound(SOUND_FALLING_ROCK);
     }
-    if(isFalling())
+    if (isFalling())
         fall(getX(), getY());
 }
 
@@ -441,12 +520,18 @@ void SonarKit::doSomething()
 {
     if (!isAlive())
         return;
-    // Have iceman pickup item if nearby
-    if(getWorld()->wiRadIceman(this, 3.0) && isVisible())
+    // have iceman pickup item if nearby
+    if (getWorld()->wiRadIceman(this, 3.0) && isVisible())
     {
         setDead();
         getWorld()->addObjIceman(StudentWorld::sonar);
     }
+    // check whether temp item is ticks are up
+    addTick();
+    int lvl = getWorld()->getLevel();
+    int T = max(100, 300 - 10*lvl);
+    if (getTicks() > T)
+        setDead();
 }
 
 //////////////////////////////////////////////////////////////
@@ -471,13 +556,86 @@ void WaterPool::doSomething()
 {
     if (!isAlive())
         return;
-    // Have iceman pickup item if nearby
-    if(getWorld()->wiRadIceman(this, 3.0) && isVisible())
+    
+    // have iceman pickup item if nearby
+    if (getWorld()->wiRadIceman(this, 3.0) && isVisible())
     {
         setDead();
         getWorld()->addObjIceman(StudentWorld::water);
     }
+    // check whether temp item is ticks are up
+    addTick();
+    int lvl = getWorld()->getLevel();
+    int T = max(100, 300 - 10*lvl);
+    if (getTicks() > T)
+        setDead();
 }
+
+//////////////////////////////////////////////////////////////
+// Squirt Implementation                                    //
+//////////////////////////////////////////////////////////////
+
+Squirt::Squirt(StudentWorld* world, int x, int y, Direction dir):
+Actor(world, IID_WATER_SPURT, x, y, dir, 1.0, 1)
+{
+    setVisible(true);
+}
+
+Squirt::~Squirt()
+{
+    setVisible(false);
+    setPickableIceman(false);
+    setDead();
+}
+
+void Squirt::doSomething()
+{
+    if (!isAlive())
+        return;
+    if (m_traveled >= 4)
+    {
+        setDead();
+        return;
+    }
+    
+    int x = getX();
+    int y = getY();
+    switch (getDirection())
+    {
+        //TODO: add ice and boulder boundaries
+        case up:
+            moveTo(getX(), getY()+1);
+            break;
+        case down:
+            moveTo(getX(), getY()-1);
+            break;
+        case left:
+            moveTo(getX()-1, getY());
+            break;
+        case right:
+            moveTo(getX()+1, getY());
+            break;
+        default:
+            break;
+    }
+    m_traveled++;
+    
+    
+//    // have iceman pickup item if nearby
+//    if (getWorld()->wiRadIceman(this, 3.0) && isVisible())
+//    {
+//        setDead();
+//        getWorld()->addObjIceman(StudentWorld::water);
+//    }
+//    // check whether temp item is ticks are up
+//    addTick();
+//    int lvl = getWorld()->getLevel();
+//    int T = max(100, 300 - 10*lvl);
+//    if (getTicks() > T)
+//        setDead();
+}
+
+
 
 
 

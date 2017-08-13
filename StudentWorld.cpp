@@ -23,7 +23,7 @@ StudentWorld::StudentWorld(std::string assetDir)
 
 StudentWorld::~StudentWorld()
 {
-    cleanUp();           // TODO: Fix!!! cant call cleanup
+    destroyAll();
 }
 
 int StudentWorld::init()
@@ -53,7 +53,6 @@ int StudentWorld::init()
     int B = min(lvl/2 + 2, 9);  // boulders
     int N = max(5 - lvl/2, 2);  // gold
     int L = min(2 + lvl, 21);   // barrels
-    
     insertRandom(B, boulder);
     insertRandom(N, gold);
     insertRandom(L, barrel);
@@ -67,6 +66,7 @@ int StudentWorld::move()
 {
     // iceman actions
     setDisplayText();
+    
     m_iceman->doSomething();
     int imX = m_iceman->getX();     // dig away ice in iceman's path
     int imY = m_iceman->getY();
@@ -102,10 +102,19 @@ int StudentWorld::move()
         addActor(new SonarKit(this));
     else if (chance > 0)    // 4 in 5 chance water
         addPool();
-
-        
     
-    //TODO: check for barrels
+    if (!m_iceman->isAlive())   // if iceman dies
+    {
+        playSound(SOUND_PLAYER_GIVE_UP);
+        decLives();
+        return GWSTATUS_PLAYER_DIED;
+    }
+    
+    if (getBarrels() == 0)  // if player finished level
+    {
+        playSound(SOUND_FINISHED_LEVEL);
+        return GWSTATUS_FINISHED_LEVEL;
+    }
     
     return GWSTATUS_CONTINUE_GAME;
     // This code is here merely to allow the game to build, run, and terminate after you hit enter a few times.
@@ -116,13 +125,22 @@ int StudentWorld::move()
 
 void StudentWorld::cleanUp()
 {
+    destroyAll();
+}
+
+void StudentWorld::destroyAll()
+{
     delete m_iceman;
     m_iceman = nullptr;
     for (int r = 0; r < ICE_GRID_HEIGHT; r++)
         for (int c = 0; c < ICE_GRID_WIDTH; c++)
             clearIce(c, r);
-    
-    // TODO: Delete items
+    vector<Actor*>::iterator it = m_actors.begin();
+    while (it != m_actors.end())
+    {
+        delete *it;
+        it = m_actors.erase(it);
+    }
 }
 
 Iceman* StudentWorld::getIceman()
@@ -202,7 +220,7 @@ void StudentWorld::insertRandom(int amt, ActorType type)
                     addActor(new Barrel(this, x, y));
                     break;
                 case water:
-                    addActor(new WaterPool(this, x, y));
+                    addActor(new WaterPool(this, x, y));    // TODO: can only have one pool at a time
                     break;
             }
             i++;
@@ -268,12 +286,12 @@ bool StudentWorld::isBoundary(ActorType type, int x, int y) const
 //}
 
 // returns true if boulder is within distance of 3
-bool StudentWorld::isBoulder(int x, int y) const
+bool StudentWorld::isBoulder(Actor* a, int x, int y) const
 {
     vector<Actor*>::const_iterator it = m_actors.begin();
     while (it != m_actors.end())
     {
-        if ((*it)->getID() == IID_BOULDER && (*it) != this) /// fix so doesn't recognize itself
+        if ((*it)->getID() == IID_BOULDER && (*it) != a) /// fix so doesn't recognize itself
         {
             int boX = (*it)->getX();
             int boY = (*it)->getY();

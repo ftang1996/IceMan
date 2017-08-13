@@ -23,7 +23,7 @@ class StudentWorld : public GameWorld
 {
 public:
     enum ActorType {iceman, protestor, hardcore,
-        boulder, gold, barrel, sonar, water};
+        boulder, gold, barrel, sonar, water, squirt};
     StudentWorld(std::string assetDir);
     virtual ~StudentWorld();
     
@@ -42,7 +42,7 @@ public:
 
     bool isBoundary(ActorType type, int x, int y) const;
     //bool isTunnel(int x, int y) const;
-    bool isBoulder(int x, int y) const;
+    bool isBoulder(Actor* a, int x, int y) const;
     double distance(int x1, int y1, int x2, int y2) const;
     bool euclidian6(int x, int y) const;
     bool wiRadIceman(Actor* a, double radius) const;
@@ -52,6 +52,8 @@ public:
     void addPool();
 
     int chanceOfGoodie(int chance);
+    void destroyAll();
+    
     
 
 //    void showNearbyItems(int x, int y);
