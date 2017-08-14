@@ -12,8 +12,8 @@ class Actor: public GraphObject
 {
 public:
     Actor(StudentWorld* world, int imageID,
-          int startX, int startY, Direction dir,
-          double size, unsigned int depth);
+          int startX, int startY, Direction dir = right,
+          double size = 1.0, unsigned int depth = 0);
     virtual ~Actor();
     virtual void doSomething() = 0;
     void addTick();
@@ -173,9 +173,61 @@ private:
     int m_traveled;
 };
 
-//TODO: Classes to implement
+class Protester: public Person
+{
+public:
+    Protester(int hp, StudentWorld* world, int imID);
+    virtual ~Protester();
+    virtual void doSomething() = 0;
+    void setLeave();
+    bool isLeaving();
+    
+    void addTick();
+    int getRestTicks();
+    int getTurnTicks();
+    void setRestTicks(int ticks);
+    void setTurnTicks(int ticks);
+//    int getShoutTick();
+    
+    int getTicksToMove();
+    int getTicksToTurn();
+    void setTicksToMove();
+    void setTicksToTurn();
+    
+    bool isBlocked(int x, int y, Direction dir);
+    Direction randomDirection();
+    void move();
+//    void setRestTick(int num);
+//    void setShoutTick(int num);
+//    void setTurnTick(int num);
+//    void setStepsToMove(int num);
+//    int randomStepsToMove();
+    
+   
+private:
+    bool m_leaving;
+    int m_restTicks;
+    int m_turnTicks;
+    int m_ticksToMove;
+    int m_ticksToTurn;
 
-//class Protester: public Person {};
+
+    
+
+
+//    int m_shoutTicks;
+
+};
+
+class RegularProtester: public Protester
+{
+public:
+    RegularProtester(StudentWorld* world);
+    virtual ~RegularProtester();
+    virtual void doSomething();
+    
+};
+
 //class HardcoreProtester: public Protester {};
 
 

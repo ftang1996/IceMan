@@ -19,6 +19,7 @@ GameWorld* createStudentWorld(string assetDir)
 StudentWorld::StudentWorld(std::string assetDir)
 : GameWorld(assetDir)
 {
+    m_ticks = 0;
 }
 
 StudentWorld::~StudentWorld()
@@ -56,7 +57,7 @@ int StudentWorld::init()
     insertRandom(B, boulder);
     insertRandom(N, gold);
     insertRandom(L, barrel);
-    
+    addActor(new RegularProtester(this));
     
     
     return GWSTATUS_CONTINUE_GAME;
@@ -96,12 +97,27 @@ int StudentWorld::move()
     }
     
     // randomly add goodie, do nothing if returns -1
-    int G = getLevel()*25 + 300;
-    int chance = chanceOfGoodie(G);
-    if (chance == 0)    // 1 in 5 chance sonar
+    int lvl = getLevel();
+    int G = lvl*25 + 300;
+    int chanceGoodie = chanceOfGoodie(G);
+    if (chanceGoodie == 0)    // 1 in 5 chance sonar
         addActor(new SonarKit(this));
-    else if (chance > 0)    // 4 in 5 chance water
-        addPool();
+    else if (chanceGoodie > 0)    // 4 in 5 chance water
+        insertRandom(1, water);
+        //addPool();
+    
+    // chance of adding protestor
+    int P = max(25, 200 - lvl);
+    if (m_ticks % P == 0)
+    {
+        int probOfHardcore = min(90, lvl*25 + 30);
+        int chanceProtest = chanceOfProtester(probOfHardcore);
+        if (chanceProtest == 1)
+            addActor(new RegularProtester(this));
+            
+            // TODO add hardcore protester
+    
+    }
     
     if (!m_iceman->isAlive())   // if iceman dies
     {
@@ -116,6 +132,7 @@ int StudentWorld::move()
         return GWSTATUS_FINISHED_LEVEL;
     }
     
+    m_ticks++;
     return GWSTATUS_CONTINUE_GAME;
     // This code is here merely to allow the game to build, run, and terminate after you hit enter a few times.
     // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
@@ -162,7 +179,6 @@ void StudentWorld::setDisplayText()
     int squirts = m_iceman->getSquirts();
     int gold = m_iceman->getGold();
     int barrels = getBarrels();
-    // TODO int barrelsLeft = ...
     int sonar = m_iceman->getCharge();
     int score = getScore();
     
@@ -189,6 +205,16 @@ int StudentWorld::chanceOfGoodie(int chance)
     if (random == num)
         return rand() % 5;
     return -1;
+}
+
+int StudentWorld::chanceOfProtester(int chance)
+{
+    int num = chance/2;
+    int random = rand() % chance+1;
+    if (random == num)
+        return 1;   // hardcore
+    else
+        return 0;   // regular
 }
 
 // insert object at random location
@@ -220,6 +246,11 @@ void StudentWorld::insertRandom(int amt, ActorType type)
                     addActor(new Barrel(this, x, y));
                     break;
                 case water:
+                    while (isIceGrid(x, y))
+                    {
+                        x = rand() % (ICE_GRID_WIDTH - SPRITE_WIDTH + 1);
+                        y = rand() % (ICE_GRID_HEIGHT - SPRITE_WIDTH + 1);
+                    }
                     addActor(new WaterPool(this, x, y));    // TODO: can only have one pool at a time
                     break;
             }
@@ -234,6 +265,22 @@ bool StudentWorld::isIce(int x, int y) const
     if (m_ice[y][x] == nullptr)
         return false;
     return true;
+}
+
+bool StudentWorld::isIceGrid(int x, int y)
+{
+    if (x < 0 || y < 0 || x > 60 || y > 60)
+        return false;
+    
+    for (int r = y; r < y + 4; r++)
+    {
+        for (int c = x; c < x + 4; c++)
+        {
+            if (m_ice[r][c] != nullptr)
+                return true;
+        }
+    }
+    return false;
 }
 
 // normally delete ice
@@ -376,19 +423,33 @@ int StudentWorld::getBarrels() const
     return barrels;
 }
 
+// returns number of water pools
+int StudentWorld::getPools() const
+{
+    int pools = 0;
+    vector<Actor*>::const_iterator it = m_actors.begin();
+    while (it != m_actors.end())
+    {
+        if ((*it)->getID() == IID_WATER_POOL)
+            pools++;
+        it++;
+    }
+    return pools;
+}
+
 // add actors to m_actors vector
 void StudentWorld::addActor(Actor* add)
 {
     m_actors.push_back(add);
 }
 
-// add pool to random location in tunnel
-void StudentWorld::addPool()
-{
-    int x = 30;
-    int y = 4 + rand() % 46;
-    addActor(new WaterPool(this, x, y));
-}
+//// add pool to random location in tunnel
+//void StudentWorld::addPool()
+//{
+//    int x = 30;
+//    int y = 4 + rand() % 46;
+//    addActor(new WaterPool(this, x, y));
+//}
 //void StudentWorld::showNearbyItems(int x, int y)
 //{
 //    int itemX, itemY, type;

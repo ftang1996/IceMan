@@ -93,7 +93,6 @@ Person::~Person()
 {
     setVisible(false);
     die();
-    setPickableIceman(false);
 }
 
 void Person::die()
@@ -110,6 +109,184 @@ int Person::getHP() const
 void Person::setHP(int newHP)
 {
     m_hp = newHP;
+}
+
+//////////////////////////////////////////////////////////////
+// Protestor Implementation                                 //
+//////////////////////////////////////////////////////////////
+
+Protester::Protester(int hp, StudentWorld* world, int imID):
+Person(hp, world, imID, 60, 60, left)
+{
+    m_leaving = false;
+    setTicksToTurn();
+    setTicksToMove();
+}
+
+Protester::~Protester()
+{
+    setVisible(false);
+    die();
+}
+
+
+bool Protester::isLeaving()
+{
+    return m_leaving;
+}
+
+void Protester::setLeave()
+{
+    m_leaving = false;
+}
+
+int Protester::getRestTicks()
+{
+    return m_restTicks;
+}
+
+int Protester::getTurnTicks()
+{
+    return m_turnTicks;
+}
+
+void Protester::setRestTicks(int ticks)
+{
+    m_restTicks = ticks;
+}
+
+void Protester::setTurnTicks(int ticks)
+{
+    m_turnTicks = ticks;
+}
+
+int Protester::getTicksToMove()
+{
+    return m_ticksToMove;
+}
+
+int Protester::getTicksToTurn()
+{
+    return m_ticksToTurn;
+}
+
+void Protester::setTicksToMove()
+{
+    int lvl = getWorld()->getLevel();
+    m_ticksToMove = max(0, 3 - lvl/4);
+}
+
+void Protester::setTicksToTurn()
+{
+    m_ticksToTurn = rand() % 61 + 8;
+}
+
+bool Protester::isBlocked(int x, int y, Direction dir)
+{
+    switch(dir)
+    {
+        case up:
+            if (getWorld()->isIceGrid(x, y+1) ||
+                getWorld()->isBoulder(this, x, y+1) ||
+                getWorld()->isBoundary(StudentWorld::protester, x, y+1))
+                return false;
+        case down:
+            if (getWorld()->isIceGrid(x, y-1) ||
+                getWorld()->isBoulder(this, x, y-1) ||
+                getWorld()->isBoundary(StudentWorld::protester, x, y-1))
+                return false;
+        case left:
+            if (getWorld()->isIceGrid(x+1, y) ||
+                getWorld()->isBoulder(this, x+1, y) ||
+                getWorld()->isBoundary(StudentWorld::protester, x-1, y))
+                return false;
+        case right:
+            if (getWorld()->isIceGrid(x-1, y) ||
+                getWorld()->isBoulder(this, x-1, y) ||
+                getWorld()->isBoundary(StudentWorld::protester, x+1, y))
+                return false;
+    }
+    return true;
+}
+
+GraphObject::Direction Protester::randomDirection()
+{
+    int dir = rand() % 4;
+    switch (dir)
+    {
+        case 0:
+            return up;
+            break;
+        case 1:
+            return down;
+            break;
+        case 2:
+            return left;
+            break;
+        case 3:
+            return right;
+            break;
+        default:
+            return up;
+            break;
+    }
+}
+
+void Protester::move()
+{
+
+}
+
+//    int getShoutTick();
+
+//////////////////////////////////////////////////////////////
+// Regular Protester Implementation                         //
+//////////////////////////////////////////////////////////////
+
+RegularProtester::RegularProtester(StudentWorld* world):
+Protester(5, world, IID_PROTESTER)
+{
+
+}
+
+RegularProtester::~RegularProtester()
+{
+    setVisible(false);
+    die();
+}
+
+void RegularProtester::doSomething()
+{
+    if (!isAlive())
+        return;
+    
+    if (getTurnTicks() <= getTicksToTurn()) // check ticks til next turn
+        setTurnTicks(getTurnTicks()+1);
+    else
+    {
+        while(isBlocked(getX(), getY(), getDirection()))
+            setDirection(randomDirection());
+        setTicksToTurn();
+        setTurnTicks(0);
+    }
+    if (getRestTicks() <= getTicksToMove()) // check ticks til next move
+    {
+        setRestTicks(getTicksToMove()+1);
+        return;
+    }
+    else
+    {
+        move();
+        setRestTicks(0);
+    }
+    
+    if (getHP() == 0)
+    {
+        setLeave();
+    }
+    
+    
+    
 }
 
 
@@ -307,7 +484,6 @@ void Iceman::decCharge()
     m_charge--;
 }
 
-
 //////////////////////////////////////////////////////////////
 // Ice Implementation                                       //
 //////////////////////////////////////////////////////////////
@@ -348,7 +524,7 @@ bool Gold::isPickableProtester() const
     return m_pickableProtester;
 }
 
-void Gold::droppedGold()       //todo: need this???
+void Gold::droppedGold()
 {
     setPickableIceman(false);
     setTemp();
@@ -458,14 +634,14 @@ void Boulder::setFalling(bool fall)
 // makes boulder fall one unit down
 void Boulder::fall(int x, int y)
 {
-    moveTo(getX(), getY()-1);
-    int r = getY();
-    for (int c = getX(); c < getX()+SPRITE_WIDTH; c++)
-        if (getWorld()->isIce(c, r) || getWorld()->isBoulder(this, c, r))
-        {
-            setDead();
-            setVisible(false);
-        }
+    moveTo(x, y-1);
+    //int r = getY();
+    //for (int c = getX(); c < getX()+SPRITE_WIDTH; c++)
+    if (getWorld()->isIceGrid(x, y-1) || getWorld()->isBoulder(this, x, y-1))
+    {
+        setDead();
+        setVisible(false);
+    }
 }
 
 void Boulder::doSomething()
@@ -592,17 +768,11 @@ void Squirt::doSomething()
 {
     if (!isAlive())
         return;
-    if (m_traveled >= 4)
-    {
-        setDead();
-        return;
-    }
     
     int x = getX();
     int y = getY();
     switch (getDirection())
     {
-        //TODO: add ice and boulder boundaries
         case up:
             moveTo(getX(), getY()+1);
             break;
@@ -620,22 +790,13 @@ void Squirt::doSomething()
     }
     m_traveled++;
     
-    
-//    // have iceman pickup item if nearby
-//    if (getWorld()->wiRadIceman(this, 3.0) && isVisible())
-//    {
-//        setDead();
-//        getWorld()->addObjIceman(StudentWorld::water);
-//    }
-//    // check whether temp item is ticks are up
-//    addTick();
-//    int lvl = getWorld()->getLevel();
-//    int T = max(100, 300 - 10*lvl);
-//    if (getTicks() > T)
-//        setDead();
+    if (m_traveled >= 4 || getWorld()->isIceGrid(x, y)
+        || getWorld()->isBoulder(this, x, y))
+    {
+        setDead();
+        return;
+    }
 }
-
-
 
 
 

@@ -12,7 +12,6 @@
 
 const int ICE_GRID_WIDTH = 64;
 const int ICE_GRID_HEIGHT = 60;
-//const double MIN_RADIUS = 6.0;
 
 class Actor;
 class Person;
@@ -22,7 +21,7 @@ class Ice;
 class StudentWorld : public GameWorld
 {
 public:
-    enum ActorType {iceman, protestor, hardcore,
+    enum ActorType {iceman, protester, hardcore,
         boulder, gold, barrel, sonar, water, squirt};
     StudentWorld(std::string assetDir);
     virtual ~StudentWorld();
@@ -37,10 +36,12 @@ public:
     void insertRandom(int amt, ActorType type);
     
     bool isIce(int x, int y) const;
+    bool isIceGrid(int x, int y);
     bool clearIce(int x, int y);
 //    bool digIce(int x, int y);
 
     bool isBoundary(ActorType type, int x, int y) const;
+    
     //bool isTunnel(int x, int y) const;
     bool isBoulder(Actor* a, int x, int y) const;
     double distance(int x1, int y1, int x2, int y2) const;
@@ -48,10 +49,12 @@ public:
     bool wiRadIceman(Actor* a, double radius) const;
     void addObjIceman(ActorType type);
     int getBarrels() const;
+    int getPools() const;
     void addActor(Actor* add);
-    void addPool();
+    //void addPool();
 
     int chanceOfGoodie(int chance);
+    int chanceOfProtester(int chance);
     void destroyAll();
     
     
@@ -65,6 +68,7 @@ private:
     Iceman* m_iceman;
     Ice* m_ice[VIEW_WIDTH][VIEW_HEIGHT];
     std::vector<Actor*> m_actors;
+    int m_ticks;
 };
 
 #endif // STUDENTWORLD_H_
