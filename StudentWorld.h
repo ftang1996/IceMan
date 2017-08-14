@@ -48,6 +48,8 @@ public:
     bool euclidian6(int x, int y) const;
     bool wiRadIceman(Actor* a, double radius) const;
     bool isFacingIceman(Actor* a) const;
+    bool wiRadProtester(Actor *a, Actor* protester, double radius) const;
+    bool isFacingProtester(Actor* protester, Actor* a) const;
     void addObjIceman(ActorType type);
     int getBarrels() const;
     int getPools() const;

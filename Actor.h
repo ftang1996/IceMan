@@ -25,6 +25,7 @@ public:
     bool isPermanent() const;
     int getTicks() const;
     void setTemp();
+    virtual void isAnnoyed(int annoy) = 0;
     
 
 
@@ -49,12 +50,13 @@ public:
     void die();
     int getHP() const;
     void setHP(int newHP);
+    
 
     
 
     // TODO:functions to implement
     // virtual void bonked();
-    // virtual void annoyed();
+    virtual void isAnnoyed(int annoy);
     // virtual void addItem() = 0;
     
 private:
@@ -81,7 +83,6 @@ public:
     void useSonar();
     void dropGold();
     void squirt();
-    void isAnnoyed(int annoy);
 
     // void dig(int x, int y, Direction dir);
 
@@ -99,6 +100,7 @@ public:
     virtual ~Ice();
     
     virtual void doSomething();
+    virtual void isAnnoyed(int annoy);
 };
 
 class Gold: public Actor
@@ -111,6 +113,7 @@ public:
     void droppedGold();
     
     virtual void doSomething();
+    virtual void isAnnoyed(int annoy);
 private:
     bool m_pickableProtester;
 };
@@ -122,6 +125,7 @@ public:
     virtual ~Barrel();
     
     virtual void doSomething();
+    virtual void isAnnoyed(int annoy);
 
     //TODO: correct annoyed implement
 };
@@ -137,8 +141,11 @@ public:
     bool isFalling() const;
     void setFalling(bool fall);
     void fall(int x, int y);
+    bool personUnder();
+    
     
     virtual void doSomething();
+    virtual void isAnnoyed(int annoy);
 private:
     bool m_stable;
     bool m_falling;
@@ -151,6 +158,7 @@ public:
     virtual ~SonarKit();
     
     virtual void doSomething();
+    virtual void isAnnoyed(int annoy);
     
 };
 
@@ -161,6 +169,7 @@ public:
     virtual ~WaterPool();
     
     virtual void doSomething();
+    virtual void isAnnoyed(int annoy);
 };
 
 class Squirt: public Actor
@@ -170,6 +179,7 @@ public:
     virtual ~Squirt();
     
     virtual void doSomething();
+    virtual void isAnnoyed(int annoy);
 private:
     int m_traveled;
 };

@@ -42,7 +42,6 @@ bool Actor::isAlive() const
 void Actor::setDead()
 {
     m_alive = false;
-    setVisible(false);
 }
 
 bool Actor::isPickableIceman() const
@@ -92,11 +91,6 @@ Actor(world, imageID, startX, startY, dir, size, depth)
 Person::~Person()
 {
     setVisible(false);
-    die();
-}
-
-void Person::die()
-{
     setDead();
     setHP(0);
 }
@@ -109,6 +103,13 @@ int Person::getHP() const
 void Person::setHP(int newHP)
 {
     m_hp = newHP;
+}
+
+void Person::isAnnoyed(int annoy)
+{
+    if (annoy == 0)    // to zero hp
+        setHP(0);
+    setHP(getHP() - annoy);
 }
 
 //////////////////////////////////////////////////////////////
@@ -127,7 +128,6 @@ Person(hp, world, imID, 60, 60, left)
 Protester::~Protester()
 {
     setVisible(false);
-    die();
 }
 
 
@@ -252,7 +252,6 @@ void Protester::annoy()
 {
     getWorld()->getIceman()->isAnnoyed(2);
 }
-//    int getShoutTick();
 
 //////////////////////////////////////////////////////////////
 // Regular Protester Implementation                         //
@@ -267,7 +266,6 @@ Protester(5, world, IID_PROTESTER)
 RegularProtester::~RegularProtester()
 {
     setVisible(false);
-    die();
 }
 
 void RegularProtester::doSomething()
@@ -306,11 +304,13 @@ void RegularProtester::doSomething()
             getWorld()->playSound(SOUND_PROTESTER_YELL);
             annoy();
             setShoutTicks(0);
+            return;
         }
     }
     
     if (getHP() == 0)
     {
+        setDead();
         setLeave();
     }
 }
@@ -382,7 +382,7 @@ void Iceman::doSomething()
         switch(key)
         {
             case KEY_PRESS_ESCAPE:
-                die();
+                setDead();
                 break;
             case KEY_PRESS_UP:
                 if (dir == up)
@@ -445,8 +445,8 @@ void Iceman::doSomething()
         }
     }
     
-    if (getHP() >= 0)
-        die();
+    if (getHP() <= 0)
+        setDead();
 }
 
 void Iceman::useSonar()
@@ -513,11 +513,6 @@ void Iceman::decCharge()
     m_charge--;
 }
 
-void Iceman::isAnnoyed(int annoy)
-{
-    setHP(getHP() - annoy);
-}
-
 //////////////////////////////////////////////////////////////
 // Ice Implementation                                       //
 //////////////////////////////////////////////////////////////
@@ -534,7 +529,8 @@ Ice::~Ice()
     setVisible(false);
 }
 
-void Ice::doSomething() {}
+void Ice::doSomething() { return; }
+void Ice::isAnnoyed(int annoy) { return; }
 
 //////////////////////////////////////////////////////////////
 // Gold Implementation                                      //
@@ -587,6 +583,8 @@ void Gold::doSomething()
         setDead();
 }
 
+void Gold::isAnnoyed(int annoy) { return; }
+
 //////////////////////////////////////////////////////////////
 // Barrel Implementation                                    //
 //////////////////////////////////////////////////////////////
@@ -621,6 +619,8 @@ void Barrel::doSomething()
         getWorld()->addObjIceman(StudentWorld::barrel);
     }
 }
+
+void Barrel::isAnnoyed(int annoy) { return; }
 
 //////////////////////////////////////////////////////////////
 // Boulder Implementation                                   //
@@ -673,6 +673,40 @@ void Boulder::fall(int x, int y)
         setDead();
         setVisible(false);
     }
+    if (personUnder())
+        return;
+}
+
+bool Boulder::personUnder()
+{
+    bool under = false;
+    // if iceman Under
+    if (getWorld()->wiRadIceman(this, 3.0) &&
+        getWorld()->isFacingIceman(this))
+    {
+        getWorld()->getIceman()->isAnnoyed(0);
+        under = true;
+    }
+    
+    // if protester under
+    vector <Actor*> actors = getWorld()->getActors();
+    vector<Actor*>::iterator it = actors.begin();
+    while (it != actors.end())
+    {
+        
+        if (((*it)->getID() == IID_PROTESTER ||
+             (*it)->getID() == IID_HARD_CORE_PROTESTER))
+        {
+            if (getWorld()->wiRadProtester(this, (*it), 3.0) &&
+                getWorld()->isFacingProtester((*it), this))
+            {
+                (*it)->isAnnoyed(0);
+                under = true;
+            }
+        }
+        it++;
+    }
+    return under;
 }
 
 void Boulder::doSomething()
@@ -705,6 +739,8 @@ void Boulder::doSomething()
     if (isFalling())
         fall(getX(), getY());
 }
+
+void Boulder::isAnnoyed(int annoy) { return; }
 
 //////////////////////////////////////////////////////////////
 // SonarKit Implementation                                  //
@@ -740,6 +776,8 @@ void SonarKit::doSomething()
     if (getTicks() > T)
         setDead();
 }
+
+void SonarKit::isAnnoyed(int annoy) { return; }
 
 //////////////////////////////////////////////////////////////
 // WaterPool Implementation                                 //
@@ -778,6 +816,8 @@ void WaterPool::doSomething()
         setDead();
 }
 
+void WaterPool::isAnnoyed(int annoy) { return; }
+
 //////////////////////////////////////////////////////////////
 // Squirt Implementation                                    //
 //////////////////////////////////////////////////////////////
@@ -805,22 +845,41 @@ void Squirt::doSomething()
     switch (getDirection())
     {
         case up:
-            moveTo(getX(), getY()+1);
+            moveTo(x, y+1);
             break;
         case down:
-            moveTo(getX(), getY()-1);
+            moveTo(x, y-1);
             break;
         case left:
-            moveTo(getX()-1, getY());
+            moveTo(x-1, y);
             break;
         case right:
-            moveTo(getX()+1, getY());
+            moveTo(x+1, y);
             break;
         default:
             break;
     }
     m_traveled++;
     
+    
+    vector <Actor*> actors = getWorld()->getActors();
+    vector<Actor*>::iterator it = actors.begin();
+    while (it != actors.end())
+    {
+
+        if (((*it)->getID() == IID_PROTESTER ||
+            (*it)->getID() == IID_HARD_CORE_PROTESTER))
+        {
+            if (getWorld()->wiRadProtester(this, (*it), 3.0) &&
+                getWorld()->isFacingProtester((*it), this))
+            {
+                (*it)->isAnnoyed(2);
+                setDead();
+            }
+        }
+        it++;
+    }
+
     if (m_traveled >= 4 || getWorld()->isIceGrid(x, y)
         || getWorld()->isBoulder(this, x, y))
     {
@@ -829,6 +888,7 @@ void Squirt::doSomething()
     }
 }
 
+void Squirt::isAnnoyed(int annoy) { return; }
 
 
 

@@ -340,7 +340,7 @@ bool StudentWorld::isBoulder(Actor* a, int x, int y) const
     vector<Actor*>::const_iterator it = m_actors.begin();
     while (it != m_actors.end())
     {
-        if ((*it)->getID() == IID_BOULDER && (*it) != a) /// fix so doesn't recognize itself
+        if ((*it)->getID() == IID_BOULDER && (*it) != a)
         {
             int boX = (*it)->getX();
             int boY = (*it)->getY();
@@ -481,6 +481,42 @@ bool StudentWorld::isFacingIceman(Actor* a) const
             if (actX < aX)
                 return true;
     }
+    return false;
+}
+
+bool StudentWorld::isFacingProtester(Actor* protester, Actor* a) const
+{
+    int aX = a->getX();
+    int aY = a->getY();
+    GraphObject::Direction dir = a->getDirection();
+    int proX = protester->getX();
+    int proY = protester->getY();
+    switch(dir)
+    {
+        case GraphObject::up:
+            if (proY > aY)
+                return true;
+        case GraphObject::down:
+            if (proY > aY)
+                return true;
+        case GraphObject::left:
+            if (proX < aX)
+                return true;
+        case GraphObject::right:
+            if (proX > aX)
+                return true;
+    }
+    return false;
+}
+
+bool StudentWorld::wiRadProtester(Actor *a, Actor* protester, double radius) const
+{
+    int actX = a->getX();
+    int actY = a->getY();
+    int proX = protester->getX();
+    int proY = protester->getY();
+    if (distance(actX, actY, proX, proY) <= radius)
+        return true;
     return false;
 }
 
