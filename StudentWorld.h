@@ -47,11 +47,13 @@ public:
     double distance(int x1, int y1, int x2, int y2) const;
     bool euclidian6(int x, int y) const;
     bool wiRadIceman(Actor* a, double radius) const;
+    bool isFacingIceman(Actor* a) const;
     void addObjIceman(ActorType type);
     int getBarrels() const;
     int getPools() const;
+    int getProtesters() const;
     void addActor(Actor* add);
-    //void addPool();
+    
 
     int chanceOfGoodie(int chance);
     int chanceOfProtester(int chance);

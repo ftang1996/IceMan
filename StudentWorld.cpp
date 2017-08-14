@@ -107,8 +107,10 @@ int StudentWorld::move()
         //addPool();
     
     // chance of adding protestor
-    int P = max(25, 200 - lvl);
-    if (m_ticks % P == 0)
+    int T = max(25, 200 - lvl);
+    int lvlP = lvl*1.5;
+    int P = min(15, 2 + lvlP);
+    if (m_ticks % T == 0 && getProtesters() < P)
     {
         int probOfHardcore = min(90, lvl*25 + 30);
         int chanceProtest = chanceOfProtester(probOfHardcore);
@@ -437,10 +439,49 @@ int StudentWorld::getPools() const
     return pools;
 }
 
+int StudentWorld::getProtesters() const
+{
+    int protesters = 0;
+    vector<Actor*>::const_iterator it = m_actors.begin();
+    while (it != m_actors.end())
+    {
+        if ((*it)->getID() == IID_PROTESTER ||
+            (*it)->getID() == IID_HARD_CORE_PROTESTER )
+            protesters++;
+        it++;
+    }
+    return protesters;
+}
+
 // add actors to m_actors vector
 void StudentWorld::addActor(Actor* add)
 {
     m_actors.push_back(add);
+}
+
+bool StudentWorld::isFacingIceman(Actor* a) const
+{
+    int aX = a->getX();
+    int aY = a->getY();
+    GraphObject::Direction dir = a->getDirection();
+    int actX = m_iceman->getX();
+    int actY = m_iceman->getY();
+    switch(dir)
+    {
+        case GraphObject::up:
+            if (actY > aY)
+                return true;
+        case GraphObject::down:
+            if (actY < aY)
+                return true;
+        case GraphObject::left:
+            if (actX > aX)
+                return true;
+        case GraphObject::right:
+            if (actX < aX)
+                return true;
+    }
+    return false;
 }
 
 //// add pool to random location in tunnel

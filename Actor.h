@@ -81,6 +81,7 @@ public:
     void useSonar();
     void dropGold();
     void squirt();
+    void isAnnoyed(int annoy);
 
     // void dig(int x, int y, Direction dir);
 
@@ -185,8 +186,10 @@ public:
     void addTick();
     int getRestTicks();
     int getTurnTicks();
+    int getShoutTicks();
     void setRestTicks(int ticks);
     void setTurnTicks(int ticks);
+    void setShoutTicks(int ticks);
 //    int getShoutTick();
     
     int getTicksToMove();
@@ -197,6 +200,7 @@ public:
     bool isBlocked(int x, int y, Direction dir);
     Direction randomDirection();
     void move();
+    void annoy();
 //    void setRestTick(int num);
 //    void setShoutTick(int num);
 //    void setTurnTick(int num);
@@ -208,6 +212,7 @@ private:
     bool m_leaving;
     int m_restTicks;
     int m_turnTicks;
+    int m_shoutTicks;
     int m_ticksToMove;
     int m_ticksToTurn;
 

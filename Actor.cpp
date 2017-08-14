@@ -121,6 +121,7 @@ Person(hp, world, imID, 60, 60, left)
     m_leaving = false;
     setTicksToTurn();
     setTicksToMove();
+    setShoutTicks(15);
 }
 
 Protester::~Protester()
@@ -150,6 +151,11 @@ int Protester::getTurnTicks()
     return m_turnTicks;
 }
 
+int Protester::getShoutTicks()
+{
+    return m_shoutTicks;
+}
+
 void Protester::setRestTicks(int ticks)
 {
     m_restTicks = ticks;
@@ -158,6 +164,11 @@ void Protester::setRestTicks(int ticks)
 void Protester::setTurnTicks(int ticks)
 {
     m_turnTicks = ticks;
+}
+
+void Protester::setShoutTicks(int ticks)
+{
+    m_shoutTicks = ticks;
 }
 
 int Protester::getTicksToMove()
@@ -237,6 +248,10 @@ void Protester::move()
 
 }
 
+void Protester::annoy()
+{
+    getWorld()->getIceman()->isAnnoyed(2);
+}
 //    int getShoutTick();
 
 //////////////////////////////////////////////////////////////
@@ -269,6 +284,7 @@ void RegularProtester::doSomething()
         setTicksToTurn();
         setTurnTicks(0);
     }
+    
     if (getRestTicks() <= getTicksToMove()) // check ticks til next move
     {
         setRestTicks(getTicksToMove()+1);
@@ -280,13 +296,23 @@ void RegularProtester::doSomething()
         setRestTicks(0);
     }
     
+    // yell if iceman is near
+    if (getWorld()->wiRadIceman(this, 4.0) && getWorld()->isFacingIceman(this))
+    {
+        if (getShoutTicks() < 15)
+            setShoutTicks(getShoutTicks()+1);
+        else
+        {
+            getWorld()->playSound(SOUND_PROTESTER_YELL);
+            annoy();
+            setShoutTicks(0);
+        }
+    }
+    
     if (getHP() == 0)
     {
         setLeave();
     }
-    
-    
-    
 }
 
 
@@ -418,6 +444,9 @@ void Iceman::doSomething()
                 break;
         }
     }
+    
+    if (getHP() >= 0)
+        die();
 }
 
 void Iceman::useSonar()
@@ -482,6 +511,11 @@ void Iceman::squirt()
 void Iceman::decCharge()
 {
     m_charge--;
+}
+
+void Iceman::isAnnoyed(int annoy)
+{
+    setHP(getHP() - annoy);
 }
 
 //////////////////////////////////////////////////////////////
@@ -551,9 +585,6 @@ void Gold::doSomething()
     }
     else if (getTicks() > 100)
         setDead();
-    
-
-    
 }
 
 //////////////////////////////////////////////////////////////
