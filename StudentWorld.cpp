@@ -1,15 +1,16 @@
+#include "GameConstants.h"
 #include "StudentWorld.h"
+#include "Actor.h"
 #include <string>
 #include <vector>
+#include <queue>
+#include <map>
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
 #include <math.h>
 
-#include "Actor.h"
-
 using namespace std;
-
 
 GameWorld* createStudentWorld(string assetDir)
 {
@@ -27,141 +28,7 @@ StudentWorld::~StudentWorld()
     destroyAll();
 }
 
-int StudentWorld::init()
-{
-    // add iceman
-    m_iceman = new Iceman(this);
-    
-    // add ice
-    for (int r = 0; r < ICE_GRID_HEIGHT; r++)
-    {
-        for (int c = 0; c < ICE_GRID_WIDTH; c++)
-        {
-            m_ice[r][c] = new Ice(this, c, r);
-        }
-    }
-    
-    for (int r = 4; r < 60; r++)       // remove center tunnel
-    {
-        for (int c = 30; c < 34; c++)
-        {
-            clearIce(c, r);
-        }
-    }
-    
-    // add all other actors
-    int lvl = getLevel();
-    int B = min(lvl/2 + 2, 9);  // boulders
-    int N = max(5 - lvl/2, 2);  // gold
-    int L = min(2 + lvl, 21);   // barrels
-    insertRandom(B, boulder);
-    insertRandom(N, gold);
-    insertRandom(L, barrel);
-    addActor(new RegularProtester(this));
-    
-    
-    return GWSTATUS_CONTINUE_GAME;
-}
-
-int StudentWorld::move()
-{
-    // iceman actions
-    setDisplayText();
-    
-    m_iceman->doSomething();
-    int imX = m_iceman->getX();     // dig away ice in iceman's path
-    int imY = m_iceman->getY();
-    bool dug = false;
-    for (int iceX = imX; iceX < imX + SPRITE_WIDTH; iceX++)
-    {
-        for (int iceY = imY; iceY < imY + SPRITE_HEIGHT; iceY++)
-            if(clearIce(iceX, iceY))
-                dug = true;
-    }
-    if (dug)        // only play sound if ice was dug
-        playSound(SOUND_DIG);
-    
-    // all actor actions
-    vector<Actor*>::iterator it = m_actors.begin();
-    while (it != m_actors.end())
-    {
-        if ((*it)->isAlive())
-            (*it)->doSomething();
-        if(!(*it)->isAlive())       // delete if dead
-        {
-            delete *it;
-            it = m_actors.erase(it);
-        }
-        else
-            it++;
-    }
-    
-    // randomly add goodie, do nothing if returns -1
-    int lvl = getLevel();
-    int G = lvl*25 + 300;
-    int chanceGoodie = chanceOfGoodie(G);
-    if (chanceGoodie == 0)    // 1 in 5 chance sonar
-        addActor(new SonarKit(this));
-    else if (chanceGoodie > 0)    // 4 in 5 chance water
-        insertRandom(1, water);
-        //addPool();
-    
-    // chance of adding protestor
-    int T = max(25, 200 - lvl);
-    int lvlP = lvl*1.5;
-    int P = min(15, 2 + lvlP);
-    if (m_ticks % T == 0 && getProtesters() < P)
-    {
-        int probOfHardcore = min(90, lvl*25 + 30);
-        int chanceProtest = chanceOfProtester(probOfHardcore);
-        if (chanceProtest == 1)
-            addActor(new RegularProtester(this));
-            
-            // TODO add hardcore protester
-    
-    }
-    
-    if (!m_iceman->isAlive())   // if iceman dies
-    {
-        playSound(SOUND_PLAYER_GIVE_UP);
-        decLives();
-        return GWSTATUS_PLAYER_DIED;
-    }
-    
-    if (getBarrels() == 0)  // if player finished level
-    {
-        playSound(SOUND_FINISHED_LEVEL);
-        return GWSTATUS_FINISHED_LEVEL;
-    }
-    
-    m_ticks++;
-    return GWSTATUS_CONTINUE_GAME;
-    // This code is here merely to allow the game to build, run, and terminate after you hit enter a few times.
-    // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
-    // decLives();
-    // return GWSTATUS_PLAYER_DIED;
-}
-
-void StudentWorld::cleanUp()
-{
-    destroyAll();
-}
-
-void StudentWorld::destroyAll()
-{
-    delete m_iceman;
-    m_iceman = nullptr;
-    for (int r = 0; r < ICE_GRID_HEIGHT; r++)
-        for (int c = 0; c < ICE_GRID_WIDTH; c++)
-            clearIce(c, r);
-    vector<Actor*>::iterator it = m_actors.begin();
-    while (it != m_actors.end())
-    {
-        delete *it;
-        it = m_actors.erase(it);
-    }
-}
-
+// Accessors
 Iceman* StudentWorld::getIceman()
 {
     return m_iceman;
@@ -172,19 +39,125 @@ vector<Actor*> StudentWorld::getActors()
     return m_actors;
 }
 
+// Returns number of barrels left in oil field
+int StudentWorld::getBarrels() const
+{
+    int barrels = 0;
+    vector<Actor*>::const_iterator it = m_actors.begin();
+    while (it != m_actors.end())
+    {
+        if ((*it)->getID() == IID_BARREL)
+            barrels++;
+        it++;
+    }
+    return barrels;
+}
+
+// Returns number of water pools in oil field
+int StudentWorld::getPools() const
+{
+    int pools = 0;
+    vector<Actor*>::const_iterator it = m_actors.begin();
+    while (it != m_actors.end())
+    {
+        if ((*it)->getID() == IID_WATER_POOL)
+            pools++;
+        it++;
+    }
+    return pools;
+}
+
+// Returns number of protesters in oil field
+int StudentWorld::getProtesters() const
+{
+    int protesters = 0;
+    vector<Actor*>::const_iterator it = m_actors.begin();
+    while (it != m_actors.end())
+    {
+        if ((*it)->getID() == IID_PROTESTER ||
+            (*it)->getID() == IID_HARD_CORE_PROTESTER )
+            protesters++;
+        it++;
+    }
+    return protesters;
+}
+
+// Checks for edges of ice grid
+bool StudentWorld::isBoundary(ActorType type, int x, int y) const
+{
+    // general window boundary
+    if (x < 0 || x > ICE_GRID_WIDTH - SPRITE_WIDTH || y < 0 || y > ICE_GRID_HEIGHT)
+        return true;
+    
+    // additional boulder boundaries
+    if (type == boulder)
+        if (x < 0 || x > 60 - SPRITE_WIDTH || y < 20 || y > 56 - SPRITE_HEIGHT)
+            return true;
+    
+    // additional gold and barrel boundaries
+    if (type == gold || type == barrel || type == boulder)
+        if (x >= (30-SPRITE_WIDTH) && x < 34 && y >= (4-SPRITE_HEIGHT) && y < 60 )
+            return true;
+    return false;
+}
+
+// Returns true if boulder is within distance of 3
+bool StudentWorld::isBoulder(Actor* a, int x, int y) const
+{
+    vector<Actor*>::const_iterator it = m_actors.begin();
+    while (it != m_actors.end())
+    {
+        if ((*it)->getID() == IID_BOULDER && (*it) != a)
+        {
+            int boX = (*it)->getX();
+            int boY = (*it)->getY();
+            if (distance(x, y, boX, boY) < 3.0)
+                return true;
+        }
+        it++;
+    }
+    return false;
+}
+
+// Returns true if ice exists at point (x,y)
+bool StudentWorld::isIce(int x, int y) const
+{
+    if (m_ice[y][x] == nullptr)
+        return false;
+    return true;
+}
+
+// Returns true if ice exists at 4x4 grid
+bool StudentWorld::isIceGrid(int x, int y) const
+{
+    if (x < 0 || y < 0 || x > 60 || y > 60)
+        return false;
+    
+    for (int r = y; r < y + 4; r++)
+    {
+        for (int c = x; c < x + 4; c++)
+        {
+            if (m_ice[r][c] != nullptr)
+                return true;
+        }
+    }
+    return false;
+}
+
+// Configure display text in game screen
 void StudentWorld::setDisplayText()
 {
-    // Get values
+    // get values
     int level = getLevel();
     int lives = getLives();
-    int health = (m_iceman->getHP()/10)*100;
+    double health = (m_iceman->getHP()/10)*100;
     int squirts = m_iceman->getSquirts();
     int gold = m_iceman->getGold();
     int barrels = getBarrels();
     int sonar = m_iceman->getCharge();
     int score = getScore();
     
-    // Format string
+    // format string
     ostringstream ss;
     ss << "Lvl: " << setw(2) << setfill(' ') << level << "  ";
     ss << "Lives: " << lives << "  ";
@@ -195,11 +168,140 @@ void StudentWorld::setDisplayText()
     ss << "Sonar: " << setw(2) << setfill(' ') << sonar << "  ";
     ss << "Scr: " << setw(6) << setfill('0') << score;
     
+    // output to string
     string str(ss.str());
     setGameStatText(str);
 }
 
-// generate chance of adding goodie and which goodie
+// Returns true only if ice is cleared
+bool StudentWorld::clearIce(int x, int y)
+{
+    if (isIce(x, y))
+    {
+        delete m_ice[y][x];
+        m_ice[y][x] = nullptr;
+        return true;
+    }
+    return false;
+}
+
+// Returns distance between two actors
+double StudentWorld::distance(int x1, int y1, int x2, int y2) const
+{
+    return sqrt(pow((x1 - x2),2) + pow((y1 - y2),2));
+}
+
+// Returns true if new object is within distance of 6 of an existing object
+bool StudentWorld::euclidian6(int x, int y) const
+{
+    int objX, objY;
+    for (int i = 0; i < m_actors.size(); i++)
+    {
+        objX = m_actors[i]->getX();
+        objY = m_actors[i]->getY();
+        double dist = distance(x, y, objX, objY);
+        if (dist < 6.0)
+            return false;
+    }
+    return true;
+}
+
+// Returns true if actor is within certain radius from iceman
+bool StudentWorld::wiRadIceman(Actor* a, double radius) const
+{
+    int actX = a->getX();
+    int actY = a->getY();
+    int imX = m_iceman->getX();
+    int imY = m_iceman->getY();
+    if (distance(actX, actY, imX, imY) <= radius)
+        return true;
+    return false;
+}
+
+// Returns true if actor is facing iceman
+bool StudentWorld::isFacingIceman(Actor* a) const
+{
+    int aX = a->getX();
+    int aY = a->getY();
+    GraphObject::Direction dir = a->getDirection();
+    int actX = m_iceman->getX();
+    int actY = m_iceman->getY();
+    switch(dir)
+    {
+        case GraphObject::up:
+            if (actY > aY && actX == aX)
+                return true;
+        case GraphObject::down:
+            if (actY < aY && actX == aX)
+                return true;
+        case GraphObject::left:
+            if (actX > aX && actY == aY)
+                return true;
+        case GraphObject::right:
+            if (actX < aX && actY == aY)
+                return true;
+    }
+    return false;
+}
+
+// Returns direction of iceman relative to actor
+GraphObject::Direction StudentWorld::lineIceman(Actor* a) const
+{
+    int actX = a->getX();
+    int actY = a->getY();
+    int imX = m_iceman->getX();
+    int imY = m_iceman->getY();
+    
+    if (imX == actX && imY > actY)
+        return GraphObject::up;
+    else if (imX == actX && imY < actY)
+        return GraphObject::down;
+    else if (imY == actY && imX < actX)
+        return GraphObject::left;
+    else if (imY == actY && imX > actX)
+        return GraphObject::right;
+    return GraphObject::none;
+}
+
+// Returns true if actor is within certain radius from a protester
+bool StudentWorld::wiRadProtester(Actor *a, Actor* protester, double radius) const
+{
+    int actX = a->getX();
+    int actY = a->getY();
+    int proX = protester->getX();
+    int proY = protester->getY();
+    if (distance(actX, actY, proX, proY) <= radius)
+        return true;
+    return false;
+}
+
+// Returns true if actor is facing protester
+bool StudentWorld::isFacingProtester(Actor* protester, Actor* a) const
+{
+    int aX = a->getX();
+    int aY = a->getY();
+    GraphObject::Direction dir = a->getDirection();
+    int proX = protester->getX();
+    int proY = protester->getY();
+    switch(dir)
+    {
+        case GraphObject::up:
+            if (proY > aY && proX == aX)
+                return true;
+        case GraphObject::down:
+            if (proY > aY  && proX == aX)
+                return true;
+        case GraphObject::left:
+            if (proX < aX && proY == aY)
+                return true;
+        case GraphObject::right:
+            if (proX > aX  && proY == aY)
+                return true;
+    }
+    return false;
+}
+
+// Generates chance of adding goodie and which goodie
 int StudentWorld::chanceOfGoodie(int chance)
 {
     int num = chance/2;
@@ -209,17 +311,18 @@ int StudentWorld::chanceOfGoodie(int chance)
     return -1;
 }
 
+// Generates chance of which kind of protester to add
 int StudentWorld::chanceOfProtester(int chance)
 {
-    int num = chance/2;
-    int random = rand() % chance+1;
-    if (random == num)
+    int random = rand() % 100;
+    if (random <= chance)
+        
         return 1;   // hardcore
     else
         return 0;   // regular
 }
 
-// insert object at random location
+// Insert object at random location
 void StudentWorld::insertRandom(int amt, ActorType type)
 {
     int i = 0;
@@ -248,12 +351,12 @@ void StudentWorld::insertRandom(int amt, ActorType type)
                     addActor(new Barrel(this, x, y));
                     break;
                 case water:
-                    while (isIceGrid(x, y))
+                    while (isIceGrid(x, y)) // can only be generated in iceless area
                     {
                         x = rand() % (ICE_GRID_WIDTH - SPRITE_WIDTH + 1);
                         y = rand() % (ICE_GRID_HEIGHT - SPRITE_WIDTH + 1);
                     }
-                    addActor(new WaterPool(this, x, y));    // TODO: can only have one pool at a time
+                    addActor(new WaterPool(this, x, y));
                     break;
             }
             i++;
@@ -261,130 +364,13 @@ void StudentWorld::insertRandom(int amt, ActorType type)
     }
 }
 
-// returns true if ice exists at x,y
-bool StudentWorld::isIce(int x, int y) const
+// Add actors to m_actors vector
+void StudentWorld::addActor(Actor* add)
 {
-    if (m_ice[y][x] == nullptr)
-        return false;
-    return true;
+    m_actors.push_back(add);
 }
 
-bool StudentWorld::isIceGrid(int x, int y)
-{
-    if (x < 0 || y < 0 || x > 60 || y > 60)
-        return false;
-    
-    for (int r = y; r < y + 4; r++)
-    {
-        for (int c = x; c < x + 4; c++)
-        {
-            if (m_ice[r][c] != nullptr)
-                return true;
-        }
-    }
-    return false;
-}
-
-// normally delete ice
-//void StudentWorld::clearIce(int x, int y)
-//{
-//    if (isIce(x, y))
-//    {
-//        delete m_ice[y][x];
-//        m_ice[y][x] = nullptr;
-//    }
-//}
-
-// returns true if ice is removed
-bool StudentWorld::clearIce(int x, int y)
-{
-    if (isIce(x, y))
-    {
-        delete m_ice[y][x];
-        m_ice[y][x] = nullptr;
-        return true;
-    }
-    return false;
-}
-
-// checks for edges of screen
-bool StudentWorld::isBoundary(ActorType type, int x, int y) const
-{
-    // window boundary
-    if (x < 0 || x > ICE_GRID_WIDTH - SPRITE_WIDTH || y < 0 || y > ICE_GRID_HEIGHT)
-        return true;
-    
-    // additional boulder boundaries
-    if (type == boulder)
-        if (x < 0 || x > 60 - SPRITE_WIDTH || y < 20 || y > 56 - SPRITE_HEIGHT)
-            return true;
-    
-    // additional gold and barrel boundaries
-    if (type == gold || type == barrel || type == boulder)
-        if (x >= (30-SPRITE_WIDTH) && x < 34 && y >= (4-SPRITE_HEIGHT) && y < 60 )
-            return true;
-    return false;
-}
-
-// returns true if location is in central tunnel
-//bool StudentWorld::isTunnel(int x, int y) const
-//{
-//    if (x >= (30-SPRITE_WIDTH) && x < 34 && y >= (4-SPRITE_HEIGHT) && y < 60 )
-//        return true;
-//    return false;
-//}
-
-// returns true if boulder is within distance of 3
-bool StudentWorld::isBoulder(Actor* a, int x, int y) const
-{
-    vector<Actor*>::const_iterator it = m_actors.begin();
-    while (it != m_actors.end())
-    {
-        if ((*it)->getID() == IID_BOULDER && (*it) != a)
-        {
-            int boX = (*it)->getX();
-            int boY = (*it)->getY();
-            if (distance(x, y, boX, boY) < 3.0)
-                return true;
-        }
-        it++;
-    }
-    return false;
-}
-
-double StudentWorld::distance(int x1, int y1, int x2, int y2) const
-{
-    return sqrt(pow((x1 - x2),2) + pow((y1 - y2),2));
-}
-
-// checks if new object distance is greater than radius of existing objects
-bool StudentWorld::euclidian6(int x, int y) const
-{
-    int objX, objY;
-    for (int i = 0; i < m_actors.size(); i++)
-    {
-        objX = m_actors[i]->getX();
-        objY = m_actors[i]->getY();
-        double dist = distance(x, y, objX, objY);
-        if (dist < 6.0)
-            return false;
-    }
-    return true;
-}
-
-// returns true if actor distance from iceman is within radius
-bool StudentWorld::wiRadIceman(Actor* a, double radius) const
-{
-    int actX = a->getX();
-    int actY = a->getY();
-    int imX = m_iceman->getX();
-    int imY = m_iceman->getY();
-    if (distance(actX, actY, imX, imY) <= radius)
-        return true;
-    return false;
-}
-
-// add objects to iceman inventory
+// Add objects to iceman inventory
 void StudentWorld::addObjIceman(ActorType type)
 {
     switch (type)
@@ -411,167 +397,198 @@ void StudentWorld::addObjIceman(ActorType type)
     }
 }
 
-// returns number of barrels left in level
-int StudentWorld::getBarrels() const
+// Deallocates all memory for dynamic objects
+void StudentWorld::destroyAll()
 {
-    int barrels = 0;
-    vector<Actor*>::const_iterator it = m_actors.begin();
+    // deallocate iceman
+    delete m_iceman;
+    m_iceman = nullptr;
+    
+    // deallocate ice
+    for (int r = 0; r < ICE_GRID_HEIGHT; r++)
+        for (int c = 0; c < ICE_GRID_WIDTH; c++)
+            clearIce(c, r);
+    
+    // deallocate actors
+    vector<Actor*>::iterator it = m_actors.begin();
     while (it != m_actors.end())
     {
-        if ((*it)->getID() == IID_BARREL)
-            barrels++;
-        it++;
+        delete (*it);
+        it = m_actors.erase(it);
     }
-    return barrels;
 }
 
-// returns number of water pools
-int StudentWorld::getPools() const
-{
-    int pools = 0;
-    vector<Actor*>::const_iterator it = m_actors.begin();
-    while (it != m_actors.end())
-    {
-        if ((*it)->getID() == IID_WATER_POOL)
-            pools++;
-        it++;
-    }
-    return pools;
-}
-
-int StudentWorld::getProtesters() const
-{
-    int protesters = 0;
-    vector<Actor*>::const_iterator it = m_actors.begin();
-    while (it != m_actors.end())
-    {
-        if ((*it)->getID() == IID_PROTESTER ||
-            (*it)->getID() == IID_HARD_CORE_PROTESTER )
-            protesters++;
-        it++;
-    }
-    return protesters;
-}
-
-// add actors to m_actors vector
-void StudentWorld::addActor(Actor* add)
-{
-    m_actors.push_back(add);
-}
-
-bool StudentWorld::isFacingIceman(Actor* a) const
-{
-    int aX = a->getX();
-    int aY = a->getY();
-    GraphObject::Direction dir = a->getDirection();
-    int actX = m_iceman->getX();
-    int actY = m_iceman->getY();
-    switch(dir)
-    {
-        case GraphObject::up:
-            if (actY > aY)
-                return true;
-        case GraphObject::down:
-            if (actY < aY)
-                return true;
-        case GraphObject::left:
-            if (actX > aX)
-                return true;
-        case GraphObject::right:
-            if (actX < aX)
-                return true;
-    }
-    return false;
-}
-
-bool StudentWorld::isFacingProtester(Actor* protester, Actor* a) const
-{
-    int aX = a->getX();
-    int aY = a->getY();
-    GraphObject::Direction dir = a->getDirection();
-    int proX = protester->getX();
-    int proY = protester->getY();
-    switch(dir)
-    {
-        case GraphObject::up:
-            if (proY > aY)
-                return true;
-        case GraphObject::down:
-            if (proY > aY)
-                return true;
-        case GraphObject::left:
-            if (proX < aX)
-                return true;
-        case GraphObject::right:
-            if (proX > aX)
-                return true;
-    }
-    return false;
-}
-
-bool StudentWorld::wiRadProtester(Actor *a, Actor* protester, double radius) const
-{
-    int actX = a->getX();
-    int actY = a->getY();
-    int proX = protester->getX();
-    int proY = protester->getY();
-    if (distance(actX, actY, proX, proY) <= radius)
-        return true;
-    return false;
-}
-
-//// add pool to random location in tunnel
-//void StudentWorld::addPool()
+//void StudentWorld::exitPath(Actor* a, int x, int y)
 //{
-//    int x = 30;
-//    int y = 4 + rand() % 46;
-//    addActor(new WaterPool(this, x, y));
-//}
-//void StudentWorld::showNearbyItems(int x, int y)
-//{
-//    int itemX, itemY, type;
-//    for (int i = 0; i < m_items.size(); i++)
+//    bool mazePath[VIEW_WIDTH][VIEW_HEIGHT];
+//    for (int c = 0; c < VIEW_HEIGHT; c++)
 //    {
-//        type = m_items[i]->getID();
-//        if(type == IID_GOLD || type == IID_BARREL)
+//        for (int r = 0; r<VIEW_WIDTH; r++)
+////            if (m_ice[c][r]==nullptr)
+//                mazePath[c][r]=false;
+//    }
+//    Point start = Point(x,y);
+//    queue<Point> maze;
+//    queue<Point> finalPath;
+//    maze.push(start);
+//    mazePath[start.m_x][start.m_y] = true;
+//    
+//    if (maze.empty())
+//        return;
+//    while (!maze.empty())
+//    {
+//        Point p = maze.front();
+//        maze.pop();
+//        finalPath.push(p);
+//        
+//        if (p.m_x == 60 && p.m_y == 60) // return if exit point
+//            return;
+//        
+//        if (!isIceGrid(x, y+1) && !isBoulder(a, x, y+1) &&  // north
+//            !isBoundary(protester, x, y+1) && !mazePath[x][y+1])
 //        {
-//            itemX = m_items[i]->getX();
-//            itemY = m_items[i]->getY();
-//            if (distance(x, y, itemX, itemY) <= 4.0)
-//                m_items[i]->setVisible(true);
+//            mazePath[x][y+1] = true;
+//            Point add = Point(x, y+1);
+//            maze.push(add);
 //        }
+//        if (!isIceGrid(x, y-1) && !isBoulder(a, x, y-1) &&  // south
+//            !isBoundary(protester, x, y-1) && !mazePath[x][y-1])
+//        {
+//            mazePath[x][y-1] = true;
+//            Point add = Point(x, y-1);
+//            maze.push(add);
+//        }
+//        if (!isIceGrid(x-1, y) && !isBoulder(a, x-1, y) &&  // west
+//            !isBoundary(protester, x-1, y) && !mazePath[x-1][y])
+//        {
+//            mazePath[x-1][y] = true;
+//            Point add = Point(x-1, y);
+//            maze.push(add);
+//        }
+//        if (!isIceGrid(x+1, y) && !isBoulder(a, x+1, y) &&  // east
+//            !isBoundary(protester, x+1, y) && !mazePath[x+1][y])
+//        {
+//            mazePath[x+1][y] = true;
+//            Point add = Point(x+1, y);
+//            maze.push(add);
+//        }
+//        
 //    }
 //}
 
-//bool StudentWorld::hitObject(int perX, int perY)
-//{
-//    for (int i = 0; i < m_objects.size(); i++)
-//}
 
+int StudentWorld::init()
+{
+    // add iceman
+    m_iceman = new Iceman(this);
+    
+    // add ice
+    for (int r = 0; r < ICE_GRID_HEIGHT; r++)
+    {
+        for (int c = 0; c < ICE_GRID_WIDTH; c++)
+        {
+            m_ice[r][c] = new Ice(this, c, r);
+        }
+    }
+    for (int r = 4; r < 60; r++)    // remove center tunnel
+    {
+        for (int c = 30; c < 34; c++)
+        {
+            clearIce(c, r);
+        }
+    }
+    
+    // add all other actors
+    int lvl = getLevel();
+    int B = min(lvl/2 + 2, 9);  // boulders
+    int N = max(5 - lvl/2, 2);  // gold
+    int L = min(2 + lvl, 21);   // barrels
+    insertRandom(B, boulder);
+    insertRandom(N, gold);
+    insertRandom(L, barrel);
+    addActor(new RegularProtester(this));
+    
+    return GWSTATUS_CONTINUE_GAME;
+}
 
-//bool StudentWorld::okRadius(int x, int y, double rad)
-//{
-//    int existX, existY;
-//    for (int i = 0; i < m_objects.size(); i++)
-//    {
-//        existX = m_objects[i]->getX();
-//        existY = m_objects[i]->getY();
-//        float rad = sqrt(pow((x - existX),2) + pow((y-existY),2));
-//        if (rad < MIN_RADIUS)
-//            return false;
-//    }
-//    return true;
-//}
+int StudentWorld::move()
+{
+    // update display text
+    setDisplayText();
+    
+    // iceman actions
+    m_iceman->doSomething();
+    int imX = m_iceman->getX();     // dig away ice in iceman's path
+    int imY = m_iceman->getY();
+    bool dug = false;
+    for (int iceX = imX; iceX < imX + SPRITE_WIDTH; iceX++)
+    {
+        for (int iceY = imY; iceY < imY + SPRITE_HEIGHT; iceY++)
+            if(clearIce(iceX, iceY))
+                dug = true;
+    }
+    if (dug)    // only play sound if ice was dug
+        playSound(SOUND_DIG);
+    
+    // all actor actions
+    vector<Actor*>::iterator it = m_actors.begin();
+    while (it != m_actors.end())
+    {
+        if ((*it)->isAlive())
+            (*it)->doSomething();
+        if(!(*it)->isAlive())       // delete if dead
+        {
+            delete *it;
+            it = m_actors.erase(it);
+        }
+        else
+            it++;
+    }
+    
+    // randomly add goodie, do nothing if returns -1
+    int lvl = getLevel();
+    int G = lvl*25 + 300;
+    int chanceGoodie = chanceOfGoodie(G);
+    if (chanceGoodie == 0)    // 1 in 5 chance sonar
+        addActor(new SonarKit(this));
+    else if (chanceGoodie > 0)    // 4 in 5 chance water
+        insertRandom(1, water);
+    
+    // add protestor after T number of ticks
+    int T = max(25, 200 - lvl);
+    int lvlP = lvl*1.5;
+    int P = min(15, 2 + lvlP);
+    if (m_ticks % T == 0 &&  m_ticks != 0 && getProtesters() < P)
+    {
+        int probOfHardcore = min(90, lvl*10 + 30);
+        int chanceProtest = chanceOfProtester(probOfHardcore);
+        if (chanceProtest == 1)
+            addActor(new RegularProtester(this));
+        else
+            addActor(new HardcoreProtester(this));
+    }
+    
+    // if player dies
+    if (!m_iceman->isAlive())
+    {
+        playSound(SOUND_PLAYER_GIVE_UP);
+        decLives();
+        return GWSTATUS_PLAYER_DIED;
+    }
+    
+    // if player finished level
+    if (getBarrels() == 0)
+    {
+        playSound(SOUND_FINISHED_LEVEL);
+        return GWSTATUS_FINISHED_LEVEL;
+    }
+    
+    // if game continues
+    m_ticks++;
+    return GWSTATUS_CONTINUE_GAME;
+}
 
-
-//// Function returns true if trying to move past boundaries
-//bool StudentWorld::isBoundary(int x, int y)
-//{
-//    // right boundary needs to acct for image size
-//    if (x < 0 || x > ICE_GRID_WIDTH - SPRITE_WIDTH || y < 0 || y > ICE_GRID_HEIGHT)
-//        return true;
-//    return false;
-//}
-
-
-
+void StudentWorld::cleanUp()
+{
+    destroyAll();
+}

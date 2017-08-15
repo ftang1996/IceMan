@@ -1,10 +1,8 @@
 #ifndef ACTOR_H_
 #define ACTOR_H_
 
+#include "GameConstants.h"
 #include "GraphObject.h"
-#include "StudentWorld.h"       //TODO: remove later
-
-
 
 class StudentWorld;
 
@@ -15,21 +13,26 @@ public:
           int startX, int startY, Direction dir = right,
           double size = 1.0, unsigned int depth = 0);
     virtual ~Actor();
-    virtual void doSomething() = 0;
-    void addTick();
+    
     StudentWorld* getWorld() const;
     bool isAlive() const;
-    virtual void setDead();
-    bool isPickableIceman() const;
-    void setPickableIceman(bool pickable);
     bool isPermanent() const;
+    bool isPickableIceman() const;
     int getTicks() const;
+    virtual bool isStunned() const;
+    virtual bool isBonked() const;
+    virtual bool isFixated() const;
+    
+    void setDead();
     void setTemp();
-    virtual void isAnnoyed(int annoy) = 0;
-    
-
-
-    
+    void setPickableIceman(bool pickable);
+    virtual void setStun(bool stun);
+    virtual void setBonked(bool bonk);
+    virtual void setFixated(bool fix);
+    virtual void setLeave();
+    void addTick();
+    virtual void isAnnoyed(int annoy);
+    virtual void doSomething() = 0;
 private:
     StudentWorld* m_world;
     bool m_alive;
@@ -38,69 +41,32 @@ private:
     int m_ticks;
 };
 
-class Person: public Actor
-{
-public:
-    Person(int hp, StudentWorld* world, int imageID,
-           int startX, int startY, Direction dir = right,
-           double size = 1.0, unsigned int depth = 0);
-    virtual ~Person();
-    virtual void doSomething() = 0;
-
-    void die();
-    int getHP() const;
-    void setHP(int newHP);
-    
-
-    
-
-    // TODO:functions to implement
-    // virtual void bonked();
-    virtual void isAnnoyed(int annoy);
-    // virtual void addItem() = 0;
-    
-private:
-    int m_hp;
-};
-
-class Iceman: public Person
-{
-public:
-    Iceman(StudentWorld* world);
-    virtual ~Iceman();
-    
-    int getSquirts() const;
-    void addSquirts();
-    void decSquirt();
-    int getCharge() const;
-    void addCharge();
-    void decCharge();
-    int getGold() const;
-    void addGold();
-    // TODO: getBarrels
-
-    virtual void doSomething();
-    void useSonar();
-    void dropGold();
-    void squirt();
-
-    // void dig(int x, int y, Direction dir);
-
-private:
-    int m_squirts;
-    int m_charge;
-    int m_gold;
-//    int m_barrels;
-};
-
 class Ice: public Actor
 {
 public:
     Ice(StudentWorld* world, int x, int y);
     virtual ~Ice();
-    
+
     virtual void doSomething();
-    virtual void isAnnoyed(int annoy);
+};
+
+class Boulder: public Actor
+{
+public:
+    Boulder(StudentWorld* world, int x, int y);
+    virtual ~Boulder();
+    
+    bool isStable() const;
+    bool isFalling() const;
+    
+    void setUnstable();
+    void setFalling(bool fall);
+    void fall(int x, int y);
+    bool personUnder();
+    virtual void doSomething();
+private:
+    bool m_stable;
+    bool m_falling;
 };
 
 class Gold: public Actor
@@ -110,10 +76,10 @@ public:
     virtual ~Gold();
 
     bool isPickableProtester() const;
-    void droppedGold();
     
+    void droppedGold();
     virtual void doSomething();
-    virtual void isAnnoyed(int annoy);
+
 private:
     bool m_pickableProtester;
 };
@@ -125,30 +91,6 @@ public:
     virtual ~Barrel();
     
     virtual void doSomething();
-    virtual void isAnnoyed(int annoy);
-
-    //TODO: correct annoyed implement
-};
-
-class Boulder: public Actor
-{
-public:
-    Boulder(StudentWorld* world, int x, int y);
-    virtual ~Boulder();
-    
-    bool isStable() const;
-    void setUnstable();
-    bool isFalling() const;
-    void setFalling(bool fall);
-    void fall(int x, int y);
-    bool personUnder();
-    
-    
-    virtual void doSomething();
-    virtual void isAnnoyed(int annoy);
-private:
-    bool m_stable;
-    bool m_falling;
 };
 
 class SonarKit: public Actor
@@ -158,8 +100,6 @@ public:
     virtual ~SonarKit();
     
     virtual void doSomething();
-    virtual void isAnnoyed(int annoy);
-    
 };
 
 class WaterPool: public Actor
@@ -169,7 +109,6 @@ public:
     virtual ~WaterPool();
     
     virtual void doSomething();
-    virtual void isAnnoyed(int annoy);
 };
 
 class Squirt: public Actor
@@ -179,59 +118,97 @@ public:
     virtual ~Squirt();
     
     virtual void doSomething();
-    virtual void isAnnoyed(int annoy);
 private:
     int m_traveled;
+};
+
+class Person: public Actor
+{
+public:
+    Person(double hp, StudentWorld* world, int imageID,
+           int startX, int startY, Direction dir = right,
+           double size = 1.0, unsigned int depth = 0);
+    virtual ~Person();
+    
+    double getHP() const;
+    
+    void setHP(double newHP);
+    virtual void isAnnoyed(int annoy);
+    virtual void doSomething() = 0;
+private:
+    double m_hp;
+};
+
+class Iceman: public Person
+{
+public:
+    Iceman(StudentWorld* world);
+    virtual ~Iceman();
+    
+    int getGold() const;
+    int getSquirts() const;
+    int getCharge() const;
+
+    void addGold();
+    void addSquirts();
+    void decSquirt();
+    void addCharge();
+    void decCharge();
+    
+    void dropGold();
+    void squirt();
+    void useSonar();
+    virtual void doSomething();
+private:
+    int m_gold;
+    int m_squirts;
+    int m_charge;
 };
 
 class Protester: public Person
 {
 public:
-    Protester(int hp, StudentWorld* world, int imID);
+    Protester(double hp, StudentWorld* world, int imID);
     virtual ~Protester();
-    virtual void doSomething() = 0;
-    void setLeave();
-    bool isLeaving();
     
-    void addTick();
-    int getRestTicks();
-    int getTurnTicks();
-    int getShoutTicks();
-    void setRestTicks(int ticks);
-    void setTurnTicks(int ticks);
-    void setShoutTicks(int ticks);
-//    int getShoutTick();
-    
-    int getTicksToMove();
-    int getTicksToTurn();
+    bool isLeaving() const;
+    virtual bool isBonked() const;
+    virtual int getStunTicks() const;
+    int getTicksToMove() const;
+    int getTicksToTurn() const;
+    int getRestTicks() const;
+    int getTurnTicks() const;
+    int getShoutTicks() const;
+    int getPerpendicularTicks() const;
+
+    virtual void setLeave();
+    virtual void setBonked(bool bonk);
+    virtual void setStunTicks(int ticks);
     void setTicksToMove();
     void setTicksToTurn();
-    
+    void setRestTicks(int ticks);
+    void setTurnTicks(int ticks);
+    void resetPerpendicularTicks();
+    void resetShoutTicks();
+    void addNonRestTicks();
     bool isBlocked(int x, int y, Direction dir);
     Direction randomDirection();
+    bool intersectionTurn();
+    bool inlineIceman();
     void move();
     void annoy();
-//    void setRestTick(int num);
-//    void setShoutTick(int num);
-//    void setTurnTick(int num);
-//    void setStepsToMove(int num);
-//    int randomStepsToMove();
-    
-   
+    virtual void doSomething() = 0;
 private:
     bool m_leaving;
-    int m_restTicks;
-    int m_turnTicks;
-    int m_shoutTicks;
+    bool m_bonked;
+    bool m_stunned;
+    int m_stunTicks;
     int m_ticksToMove;
     int m_ticksToTurn;
-
-
-    
-
-
-//    int m_shoutTicks;
-
+    int m_restTicks;
+    int m_turnTicks;
+    int m_perpedicularTicks;
+    int m_shoutTicks;
 };
 
 class RegularProtester: public Protester
@@ -243,7 +220,22 @@ public:
     
 };
 
-//class HardcoreProtester: public Protester {};
+class HardcoreProtester: public Protester
+{
+public:
+    HardcoreProtester(StudentWorld* world);
+    virtual ~HardcoreProtester();
+    
+    virtual bool isFixated() const;
+    virtual int getStareTicks() const;
+    
+    virtual void setFixated(bool fix);
+    virtual void setStareTicks(int ticks);
+    virtual void doSomething();
+private:
+    bool m_fixated;
+    int m_stareTicks;
+};
 
 
 #endif // ACTOR_H_
