@@ -53,20 +53,6 @@ int StudentWorld::getBarrels() const
     return barrels;
 }
 
-// Returns number of water pools in oil field
-int StudentWorld::getPools() const
-{
-    int pools = 0;
-    vector<Actor*>::const_iterator it = m_actors.begin();
-    while (it != m_actors.end())
-    {
-        if ((*it)->getID() == IID_WATER_POOL)
-            pools++;
-        it++;
-    }
-    return pools;
-}
-
 // Returns number of protesters in oil field
 int StudentWorld::getProtesters() const
 {
@@ -86,7 +72,7 @@ int StudentWorld::getProtesters() const
 bool StudentWorld::isBoundary(ActorType type, int x, int y) const
 {
     // general window boundary
-    if (x < 0 || x > ICE_GRID_WIDTH - SPRITE_WIDTH || y < 0 || y > ICE_GRID_HEIGHT)
+    if (x < 0 || x > ICE_GRID_WIDTH-SPRITE_WIDTH || y < 0 || y > ICE_GRID_HEIGHT)
         return true;
     
     // additional boulder boundaries
@@ -418,63 +404,124 @@ void StudentWorld::destroyAll()
     }
 }
 
-//void StudentWorld::exitPath(Actor* a, int x, int y)
-//{
-//    bool mazePath[VIEW_WIDTH][VIEW_HEIGHT];
-//    for (int c = 0; c < VIEW_HEIGHT; c++)
-//    {
-//        for (int r = 0; r<VIEW_WIDTH; r++)
-////            if (m_ice[c][r]==nullptr)
-//                mazePath[c][r]=false;
-//    }
-//    Point start = Point(x,y);
-//    queue<Point> maze;
-//    queue<Point> finalPath;
-//    maze.push(start);
-//    mazePath[start.m_x][start.m_y] = true;
-//    
-//    if (maze.empty())
-//        return;
-//    while (!maze.empty())
-//    {
-//        Point p = maze.front();
-//        maze.pop();
-//        finalPath.push(p);
-//        
-//        if (p.m_x == 60 && p.m_y == 60) // return if exit point
-//            return;
-//        
-//        if (!isIceGrid(x, y+1) && !isBoulder(a, x, y+1) &&  // north
-//            !isBoundary(protester, x, y+1) && !mazePath[x][y+1])
-//        {
-//            mazePath[x][y+1] = true;
-//            Point add = Point(x, y+1);
-//            maze.push(add);
-//        }
-//        if (!isIceGrid(x, y-1) && !isBoulder(a, x, y-1) &&  // south
-//            !isBoundary(protester, x, y-1) && !mazePath[x][y-1])
-//        {
-//            mazePath[x][y-1] = true;
-//            Point add = Point(x, y-1);
-//            maze.push(add);
-//        }
-//        if (!isIceGrid(x-1, y) && !isBoulder(a, x-1, y) &&  // west
-//            !isBoundary(protester, x-1, y) && !mazePath[x-1][y])
-//        {
-//            mazePath[x-1][y] = true;
-//            Point add = Point(x-1, y);
-//            maze.push(add);
-//        }
-//        if (!isIceGrid(x+1, y) && !isBoulder(a, x+1, y) &&  // east
-//            !isBoundary(protester, x+1, y) && !mazePath[x+1][y])
-//        {
-//            mazePath[x+1][y] = true;
-//            Point add = Point(x+1, y);
-//            maze.push(add);
-//        }
-//        
-//    }
-//}
+// Finds quickest exit path for protester
+vector<StudentWorld::Point> StudentWorld::pathToExit(Protester* pro, int inX, int inY)
+{
+    bool discovered[VIEW_WIDTH][VIEW_HEIGHT];
+    for (int c = 0; c < VIEW_WIDTH-1; c++)
+        for (int r = 0; r < VIEW_HEIGHT-1; r++)
+        {
+            discovered[c][r] = false;
+        }
+    
+    queue<Point> mazequeue;
+    vector<Point> finalpath;
+    
+    Point start = Point(inX, inY);  // initial position
+    discovered[inX][inY] = true;
+    mazequeue.push(start);
+    
+    while (!mazequeue.empty())
+    {
+        Point temp = mazequeue.front();
+        int x = temp.m_x;
+        int y = temp.m_y;
+        discovered[x][y] = true;
+        finalpath.push_back(temp);
+        mazequeue.pop();
+        
+        if (x == 60 && y == 60)   // stop if exit point reached
+        {
+            discovered[60][60] = true;
+            break;
+        }
+        
+        // queue up and check all open points
+        if (!pro->isBlocked(x, y, Actor::up))    // north
+        {
+            if (!discovered[x][y+1])    // add to queue if open and point not yet added
+            {
+//                discovered[x][y+1] = true;
+                Point add = Point(x, y+1);
+                mazequeue.push(add);
+            }
+
+        }
+        
+        if (!pro->isBlocked(x, y, Actor::down)) // south
+        {
+            
+            if (!discovered[x][y-1])
+            {
+//                discovered[x][y-1] = true;
+                Point add = Point(x, y-1);
+                mazequeue.push(add);
+            }
+        }
+        
+        if (!pro->isBlocked(x, y, Actor::left))   // west
+        {
+            if (!discovered[x-1][y])
+            {
+//                discovered[x-1][y] = true;
+                Point add = Point(x-1, y);
+                mazequeue.push(add);
+            }
+        }
+        if (!pro->isBlocked(x, y, Actor::right))   // east
+        {
+            if (!discovered[x+1][y])
+            {
+//                discovered[x+1][y] = true;
+                Point add = Point(x+1, y);
+                mazequeue.push(add);
+            }
+        }
+    }
+    
+    // find correct path from queued open points, export as a vector
+    // start from newest (end) points
+    vector<Point>::iterator it = finalpath.end();
+    it--;
+    while (it != finalpath.begin())     // front is origin, stop here
+    {
+        int x = (*it).m_x;
+        int y = (*it).m_y;
+        
+        int openCount = 0;
+        // do nothing if point is exit
+        if (x == 60 && y == 60)
+        {
+            it--;
+            continue;
+        }
+        
+        // count how many open adjacent points the coordinate has
+        if (discovered[x][y+1] && x >= 0 && x < VIEW_WIDTH &&         // north
+            y+1 >= 0 && y+1 < VIEW_HEIGHT)
+            openCount++;
+        if (discovered[x][y-1] && x >= 0 && x < VIEW_WIDTH &&         // south
+            y-1 >= 0 && y-1 < VIEW_HEIGHT)
+            openCount++;
+        if (discovered[x+1][y] && x-1 >= 0 && x-1 < VIEW_WIDTH &&     // west
+            y >= 0 && y < VIEW_HEIGHT)
+            openCount++;
+        if (discovered[x-1][y] && x+1 >= 0 && x+1 < VIEW_WIDTH &&     // east
+            y >= 0 && y < VIEW_HEIGHT)
+            openCount++;
+        
+        // coordinates with less than two open adjacent points is erased, not in path
+        if (openCount < 2)
+        {
+            discovered[x][y] = false;
+            it = finalpath.erase(it);
+        }
+        
+        it--;
+    }
+    finalpath.erase(it);  // delete initial point in front
+    return finalpath;
+}
 
 
 int StudentWorld::init()
@@ -538,6 +585,7 @@ int StudentWorld::move()
             (*it)->doSomething();
         if(!(*it)->isAlive())       // delete if dead
         {
+            (*it)->setVisible(false);
             delete *it;
             it = m_actors.erase(it);
         }

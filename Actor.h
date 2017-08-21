@@ -3,6 +3,8 @@
 
 #include "GameConstants.h"
 #include "GraphObject.h"
+#include "StudentWorld.h"
+#include <vector>
 
 class StudentWorld;
 
@@ -173,6 +175,7 @@ public:
     
     bool isLeaving() const;
     virtual bool isBonked() const;
+    virtual bool isStunned() const;
     virtual int getStunTicks() const;
     int getTicksToMove() const;
     int getTicksToTurn() const;
@@ -183,19 +186,20 @@ public:
 
     virtual void setLeave();
     virtual void setBonked(bool bonk);
+    virtual void setStun(bool stun);
     virtual void setStunTicks(int ticks);
     void setTicksToMove();
     void setTicksToTurn();
     void setRestTicks(int ticks);
     void setTurnTicks(int ticks);
-    void resetPerpendicularTicks();
     void resetShoutTicks();
+    void resetPerpendicularTicks();
     void addNonRestTicks();
     bool isBlocked(int x, int y, Direction dir);
     Direction randomDirection();
     bool intersectionTurn();
     bool inlineIceman();
-    void move();
+    void move(int inX, int inY, Direction moveDir);
     void annoy();
     virtual void doSomething() = 0;
 private:
@@ -217,7 +221,6 @@ public:
     RegularProtester(StudentWorld* world);
     virtual ~RegularProtester();
     virtual void doSomething();
-    
 };
 
 class HardcoreProtester: public Protester

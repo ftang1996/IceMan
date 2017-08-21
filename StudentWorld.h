@@ -14,10 +14,20 @@ class Actor;
 class Person;
 class Iceman;
 class Ice;
+class Protester;
 
 class StudentWorld : public GameWorld
 {
 public:
+    struct Point    // To store coordinates for exit path
+    {
+        Point(int x, int y)
+        {
+            m_x = x;
+            m_y = y;
+        }
+        int m_x, m_y;
+    };
     enum ActorType {iceman, protester, hardcore,
         boulder, gold, barrel, sonar, water, squirt};
     StudentWorld(std::string assetDir);
@@ -26,7 +36,6 @@ public:
     Iceman* getIceman();
     std::vector<Actor*> getActors();
     int getBarrels() const;
-    int getPools() const;
     int getProtesters() const;
     bool isBoundary(ActorType type, int x, int y) const;
     bool isBoulder(Actor* a, int x, int y) const;
@@ -48,7 +57,7 @@ public:
     void addActor(Actor* add);
     void addObjIceman(ActorType type);
     void destroyAll();
-    //void exitPath(Actor* a, int x, int y);
+    std::vector<Point> pathToExit(Protester* pro, int inX, int inY);
     virtual int init();
     virtual int move();
     virtual void cleanUp();
@@ -58,15 +67,5 @@ private:
     std::vector<Actor*> m_actors;
     int m_ticks;
 };
-
-//struct Point
-//{
-//    Point(int x, int y)
-//    {
-//        m_x = x;
-//        m_y = y;
-//    }
-//    int m_x, m_y;
-//};
 
 #endif // STUDENTWORLD_H_

@@ -171,7 +171,6 @@ void Boulder::fall(int x, int y)
     if (getWorld()->isIceGrid(x, y-1) || getWorld()->isBoulder(this, x, y-1))
     {
         setDead();
-        setVisible(false);
     }
     // kills if actor or protester is hit
     if (personUnder())
@@ -490,8 +489,7 @@ void Squirt::doSomething()
         if (((*it)->getID() == IID_PROTESTER ||
             (*it)->getID() == IID_HARD_CORE_PROTESTER))
         {
-            if (getWorld()->wiRadProtester(this, (*it), 3.0) &&
-                getWorld()->isFacingProtester((*it), this))
+            if (getWorld()->wiRadProtester(this, (*it), 3.0))
             {
                 (*it)->isAnnoyed(2);
                 (*it)->setStun(true);
@@ -771,7 +769,7 @@ Person(hp, world, imID, 60, 60, left)
     m_turnTicks = 0;
     m_perpedicularTicks = 200;
     m_shoutTicks = 15;
-    m_stunned = 0;
+    m_stunTicks = 0;
 }
 
 Protester::~Protester()
@@ -788,6 +786,11 @@ bool Protester::isLeaving() const
 bool Protester::isBonked() const
 {
     return m_bonked;
+}
+
+bool Protester::isStunned() const
+{
+    return m_stunned;
 }
 
 int Protester::getStunTicks() const
@@ -819,16 +822,16 @@ int Protester::getTurnTicks() const
     return m_turnTicks;
 }
 
-int Protester::getPerpendicularTicks() const
-{
-    // counter for ticks since last intersection turn
-    return m_perpedicularTicks;
-}
-
 int Protester::getShoutTicks() const
 {
     // count for ticks since last shout
     return m_shoutTicks;
+}
+
+int Protester::getPerpendicularTicks() const
+{
+    // counter for ticks since last intersection turn
+    return m_perpedicularTicks;
 }
 
 // Mutator functions
@@ -840,6 +843,11 @@ void Protester::setLeave()
 void Protester::setBonked(bool bonk)
 {
     m_bonked = bonk;
+}
+
+void Protester::setStun(bool stun)
+{
+    m_stunned = stun;
 }
 
 void Protester::setStunTicks(int ticks)
@@ -1078,26 +1086,36 @@ bool Protester::inlineIceman()
 //    }
 //}
 
-void Protester::move()
+void Protester::move(int inX, int inY, Direction moveDir)
 {
-    Direction dir = getDirection();
-    int x = getX();
-    int y = getY();
-    if (!isBlocked(x, y, dir))
+    Direction inDir = getDirection();
+    if (!isBlocked(inX, inY, moveDir))
     {
-        switch(dir)
+        switch(moveDir)
         {
             case up:
-                moveTo(x, y+1);
+                if (inDir != up)
+                    setDirection(up);
+                else
+                    moveTo(inX, inY+1);
                 break;
             case down:
-                moveTo(x, y-1);
+                if (inDir != down)
+                    setDirection(down);
+                else
+                    moveTo(inX, inY-1);
                 break;
             case left:
-                moveTo(x-1, y);
+                if (inDir != left)
+                    setDirection(left);
+                else
+                    moveTo(inX-1, inY);
                 break;
             case right:
-                moveTo(x+1, y);
+                if (inDir != right)
+                    setDirection(right);
+                else
+                    moveTo(inX+1, inY);
                 break;
         }
     }
@@ -1133,102 +1151,122 @@ void RegularProtester::doSomething()
     if (!isAlive())
         return;
     
-    // check if dead
-    if (getHP() <= 0)
+    if(!isLeaving())
     {
-        if (isBonked()) // if killed by boulder
-            getWorld()->increaseScore(500);
-        else    // if killed by squirt
-            getWorld()->increaseScore(100);
-        getWorld()->playSound(SOUND_PROTESTER_GIVE_UP);
-        setLeave();
-    }
-    
-    if (isLeaving())
-    {
-        setDead();
-        
-        // TODO: implement maze
-//        int x = getX();
-//        int y = getY();
-//        if (x == 60 && y == 60)
-//            setDead();
-//        else
-//        {
-//            getWorld()->exitPath(this, x, y);
-//            
-//        }
-    }
-    
-    // if hit by squirt gun
-    if (isStunned())
-    {
-        int lvl = getWorld()->getLevel();
-        int N = max(50, 100-lvl*100);
-        if (getStunTicks() <= N)
+        // check if dead
+        if (getHP() <= 0)
         {
-            setStunTicks(getStunTicks()+1);
+            if (isBonked()) // if killed by boulder
+                getWorld()->increaseScore(500);
+            else    // if killed by squirt
+                getWorld()->increaseScore(100);
+            getWorld()->playSound(SOUND_PROTESTER_GIVE_UP);
+            setLeave();
             return;
         }
+    
+        // if hit by squirt gun
+        if (isStunned())
+        {
+            int lvl = getWorld()->getLevel();
+            int N = max(50, 100-lvl*100);
+            if (getStunTicks() <= N)
+            {
+                setStunTicks(getStunTicks()+1);
+                return;
+            }
+            else
+                setStun(false);
+        }
+    
+        // yell if iceman is near
+        if (getWorld()->wiRadIceman(this, 4.0) && getWorld()->isFacingIceman(this))
+        {
+            if (getShoutTicks() > 15 && !isStunned())
+            {
+                getWorld()->playSound(SOUND_PROTESTER_YELL);
+                annoy();
+                resetShoutTicks();
+                return;
+            }
+        }
+        
+        // checks if at intersection and if protester should turn
+        if (getPerpendicularTicks() > 200)
+        {
+            if (intersectionTurn())     // only reset ticks if protester turned
+            {
+                resetPerpendicularTicks();
+                setTurnTicks(0);
+                setTicksToTurn();
+                return;
+            }
+        }
+    
+        // check ticks til next turn
+        if (getTurnTicks() <= getTicksToTurn())
+            setTurnTicks(getTurnTicks()+1);
         else
-            setStun(false);
+        {
+            while(isBlocked(getX(), getY(), getDirection()))
+                setDirection(randomDirection());
+            setTicksToTurn();
+            setTurnTicks(0);
+            return;
+        }
     }
     
     // check ticks til next move
     if (getRestTicks() <= getTicksToMove())
     {
-        setRestTicks(getTicksToMove()+1);
+        setRestTicks(getRestTicks()+1);
         return;
     }
-    
-    // yell if iceman is near
-    if (getWorld()->wiRadIceman(this, 4.0) && getWorld()->isFacingIceman(this))
-    {
-        if (getShoutTicks() > 15)
-        {
-            getWorld()->playSound(SOUND_PROTESTER_YELL);
-            annoy();
-            resetShoutTicks();
-            return;
-        }
-    }
-    
-    // check ticks til next turn
-    if (getTurnTicks() <= getTicksToTurn())
-        setTurnTicks(getTurnTicks()+1);
+    // moves
     else
     {
-        while(isBlocked(getX(), getY(), getDirection()))
-            setDirection(randomDirection());
-        setTicksToTurn();
-        setTurnTicks(0);
-    }
-    
-    // checks if at intersection and if protester should turn
-    if (getPerpendicularTicks() > 200)
-    {
-        if (intersectionTurn())     // only reset ticks if protester turned
+        if (isLeaving())    // move toward exit if leaving
         {
-            resetPerpendicularTicks();
-            setTurnTicks(0);
-            setTicksToTurn();
+            if (getX() == 60 && getY() == 60)     // return if at exit point
+            {
+                setDead();
+                return;
+            }
+            
+            // update every move in case iceman clears new path
+            vector<StudentWorld::Point> exitPath = getWorld()->pathToExit(this, getX(), getY());
+            int x = exitPath.front().m_x;
+            int y = exitPath.front().m_y;
+            Direction moveDir;
+            if (y-getY() == 1 && x-getX() == 0)     // otherwise change direction and move
+                moveDir = up;
+            else if (y-getY() == -1 && x-getX() == 0)
+                moveDir = down;
+            else if (y-getY() == 0 && x-getX() == -1)
+                moveDir = left;
+            else if (y-getY() == 0 && x-getX() == 1)
+                moveDir = right;
+            move(x, y, moveDir);
             return;
         }
-    }
-
-    // moves
-    if (getRestTicks())
-    {
-        if (inlineIceman())     // turns if inline with iceman
+        else
         {
-            setTurnTicks(0);
-            setTicksToTurn();
+            if (inlineIceman())     // turns if inline with iceman
+            {
+                setTurnTicks(0);
+                setTicksToTurn();
+                setRestTicks(0);
+                addNonRestTicks();
+                return;
+            }
+            Direction dir = getDirection();
+            int x = getX();
+            int y = getY();
+            move(x, y, dir);
+            setRestTicks(0);
             addNonRestTicks();
             return;
         }
-        move();
-        setRestTicks(0);
-        addNonRestTicks();
     }
 }
 
@@ -1278,120 +1316,138 @@ void HardcoreProtester::doSomething()
     if (!isAlive())
         return;
     
-    // check if dead
-    if (getHP() <= 0)
+    if(!isLeaving())
     {
-        if (isBonked()) //if killed by boulder
-            getWorld()->increaseScore(500);
-        else    // if killed by squirt
-            getWorld()->increaseScore(250);
-        getWorld()->playSound(SOUND_PROTESTER_GIVE_UP);
-        setLeave();
-    }
-    
-    if (isLeaving())
-    {
-        setDead();
-        // TODO: implement maze
-        //        int x = getX();
-        //        int y = getY();
-        //        if (x == 60 && y == 60)
-        //            setDead();
-        //        else
-        //        {
-        //            getWorld()->exitPath(this, x, y);
-        //
-        //        }
-    }
-    
-    // if hit by squirt gun
-    if (isStunned())
-    {
-        int lvl = getWorld()->getLevel();
-        int N = max(50, 100-lvl*100);
-        if (getStunTicks() <= N)
+        // check if dead
+        if (getHP() <= 0)
         {
-            setStunTicks(getStunTicks()+1);
+            if (isBonked())     // if killed by boulder
+                getWorld()->increaseScore(500);
+            else        // if killed by squirt
+                getWorld()->increaseScore(250);
+            getWorld()->playSound(SOUND_PROTESTER_GIVE_UP);
+            setLeave();
             return;
         }
-        else
-            setStun(false);
-    }
-    
-    // if fixated by gold
-    if (isFixated())
-    {
-        int lvl = getWorld()->getLevel();
-        int ticks_to_stare = max(50, 100 - lvl*10);
-        if (getStareTicks() <= ticks_to_stare)
+        
+        // if hit by squirt gun
+        if (isStunned())
         {
-            setStareTicks(getStareTicks()+1);
+            int lvl = getWorld()->getLevel();
+            int N = max(50, 100-lvl*100);
+            if (getStunTicks() <= N)
+            {
+                setStunTicks(getStunTicks()+1);
+                return;
+            }
+            else
+                setStun(false);
+        }
+        
+        // if fixated by gold
+        if (isFixated())
+        {
+            int lvl = getWorld()->getLevel();
+            int ticks_to_stare = max(50, 100 - lvl*10);
+            if (getStareTicks() <= ticks_to_stare)
+            {
+                setStareTicks(getStareTicks()+1);
+                return;
+            }
+            else
+                setStareTicks(0);
+        }
+        
+        // yell if iceman is near
+        if (getWorld()->wiRadIceman(this, 4.0) && getWorld()->isFacingIceman(this))
+        {
+            if (getShoutTicks() > 15 && !isStunned())
+            {
+                getWorld()->playSound(SOUND_PROTESTER_YELL);
+                annoy();
+                resetShoutTicks();
+                return;
+            }
+        }
+        
+        // checks if at intersection and if protester should turn
+        if (getPerpendicularTicks() > 200)
+        {
+            if (intersectionTurn())     // only reset ticks if protester turned
+            {
+                resetPerpendicularTicks();
+                setTurnTicks(0);
+                setTicksToTurn();
+                return;
+            }
+        }
+   
+        // check ticks til next turn
+        if (getTurnTicks() <= getTicksToTurn())
+            setTurnTicks(getTurnTicks()+1);
+        else
+        {
+            while(isBlocked(getX(), getY(), getDirection()))
+                setDirection(randomDirection());
+            setTicksToTurn();
+            setTurnTicks(0);
             return;
         }
-        else
-            setStareTicks(0);
     }
     
     // check ticks til next move
     if (getRestTicks() <= getTicksToMove())
     {
-        setRestTicks(getTicksToMove()+1);
+        setRestTicks(getRestTicks()+1);
         return;
     }
-    
-    // yell if iceman is near
-    if (getWorld()->wiRadIceman(this, 4.0) && getWorld()->isFacingIceman(this))
-    {
-        if (getShoutTicks() > 15)
-        {
-            getWorld()->playSound(SOUND_PROTESTER_YELL);
-            annoy();
-            resetShoutTicks();
-            return;
-        }
-    }
-    
-    // check ticks til next turn
-    if (getTurnTicks() <= getTicksToTurn())
-        setTurnTicks(getTurnTicks()+1);
+    // moves
     else
     {
-        while(isBlocked(getX(), getY(), getDirection()))
-            setDirection(randomDirection());
-        setTicksToTurn();
-        setTurnTicks(0);
-    }
-    
-    // checks if at intersection and if protester should turn
-    if (getPerpendicularTicks() > 200)
-    {
-        if (intersectionTurn())     // only reset ticks if protester turned
+        if (isLeaving())    // move toward exit if leaving
         {
-            resetPerpendicularTicks();
-            setTurnTicks(0);
-            setTicksToTurn();
+            if (getX() == 60 && getY() == 60)     // return if at exit point
+            {
+                setDead();
+                return;
+            }
+            
+            // update every move in case iceman clears new path
+            vector<StudentWorld::Point> exitPath = getWorld()->pathToExit(this, getX(), getY());
+            int x = exitPath.front().m_x;
+            int y = exitPath.front().m_y;
+            Direction moveDir;
+            if (y-getY() == 1 && x-getX() == 0)     // otherwise change direction and move
+                moveDir = up;
+            else if (y-getY() == -1 && x-getX() == 0)
+                moveDir = down;
+            else if (y-getY() == 0 && x-getX() == -1)
+                moveDir = left;
+            else if (y-getY() == 0 && x-getX() == 1)
+                moveDir = right;
+            move(x, y, moveDir);
             return;
         }
-    }
-    
-    // moves
-    if (getRestTicks())
-    {
-        if (inlineIceman())     // turns if inline with iceman
+        else
         {
-            setTurnTicks(0);
-            setTicksToTurn();
+            // TODO: make hardcore follow from further distance
+            if (inlineIceman())     // turns if inline with iceman
+            {
+                setTurnTicks(0);
+                setTicksToTurn();
+                setRestTicks(0);
+                addNonRestTicks();
+                return;
+            }
+            Direction dir = getDirection();
+            int x = getX();
+            int y = getY();
+            move(x, y, dir);
+            setRestTicks(0);
             addNonRestTicks();
             return;
         }
-        move();
-        setRestTicks(0);
-        addNonRestTicks();
     }
 }
-
-
-
-
 
 
